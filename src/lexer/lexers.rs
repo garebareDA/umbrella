@@ -13,8 +13,6 @@ pub fn run(word:&str) -> Vec<lelex::tokens::Tokens>{
 
   let result = lex.run();
   let tokens = result.get_tokens();
-  for token in tokens.iter(){
-    println!("{} {}", token.get_value(), token.get_token());
-  }
+  println!("{:?}", tokens);
   return tokens.clone();
 }

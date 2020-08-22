@@ -18,7 +18,7 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 [[package]]
 name = "lelex"
 version = "0.1.0"
-source = "git+https://github.com/garebareDA/lelex#e510529b9c93e857424f30c3dbaf5aa2f148bd82"
+source = "git+https://github.com/garebareDA/lelex#584b75c835a6cb81a04d0893856e3d31ec89bd31"
 dependencies = [
  "regex",
 ]
