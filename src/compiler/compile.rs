@@ -8,10 +8,10 @@ use inkwell::targets::{InitializationConfig, Target};
 use inkwell::OptimizationLevel;
 use std::error::Error;
 
-struct CodeGen<'ctx> {
-  context: &'ctx Context,
-  module: Module<'ctx>,
-  builder: Builder<'ctx>,
+pub struct CodeGen<'ctx> {
+  pub context: &'ctx Context,
+  pub module: Module<'ctx>,
+  pub builder: Builder<'ctx>,
 }
 
 pub fn jit_compile(ast: ast::RootAST) {
@@ -43,20 +43,14 @@ impl<'ctx> CodeGen<'ctx>  {
   pub fn judge(&mut self, types: &ast::Types) {
     match types {
       ast::Types::Call(call) => {
-        if call.callee == "print" {
+        if call.callee == "print" && call.argument.len() < 2{
           match &call.argument[0] {
             ast::Types::Strings(strings) => {
-              let i32_type = self.context.i32_type();
-              let putchar = self.module.get_function("putchar");
-              let word = strings.strings.to_string() + "\n";
-              for c in word.chars() {
-                let ascii = c.to_string().as_bytes()[0] as u64;
-                self.builder.build_call(
-                  putchar.unwrap(),
-                  &[i32_type.const_int(ascii, false).into()],
-                  "putchar",
-                );
-              }
+              self.print_string(&strings.strings);
+            }
+
+            ast::Types::Number(num) => {
+              self.print_string(&num.num.to_string());
             }
             _ => {}
           }

@@ -67,6 +67,12 @@ impl Persers {
       return Ok(ast::Types::Variable(ast::VariableAST::new(value)));
     }
 
+    if token == TOKEN._number {
+      let value = self.get_tokens(self.index).get_value().parse().unwrap();
+      let number = ast::NumberAST::new(value);
+      return Ok(ast::Types::Number(number));
+    }
+
     if token == TOKEN._string {
       let value = self.get_tokens(self.index).get_value();
       let strings = ast::StringAST::new(value);
@@ -74,6 +80,18 @@ impl Persers {
     }
 
     return Err(());
+  }
+
+  fn check_calc(&mut self, inner:ast::Types) -> Option<ast::BinaryAST> {
+    let token = self.get_tokens(self.index + 1).get_token();
+    if token == TOKEN._add || token == TOKEN._sub || token == TOKEN._div || token == TOKEN._multi {
+      self.index_add(1);
+      let value = self.get_tokens(self.index).get_value();
+      let mut binary = ast::BinaryAST::new(value.chars().nth(0).unwrap());
+      binary.node.push(inner);
+      return Some(binary);
+    }
+    return None;
   }
 
   fn get_tokens(&mut self, num: usize) -> &lelex::tokens::Tokens {
@@ -119,6 +137,17 @@ mod tests {
     let result = parser.run();
     match result.node[0] {
       ast::Types::Call(_) => {}
+      _ => panic!("not"),
+    }
+  }
+
+  #[test]
+  fn number() {
+    let lex_result = lexers::run("1111");
+    let mut parser = parsers::Persers::new(lex_result);
+    let result = parser.run();
+    match result.node[0] {
+      ast::Types::Number(_) => {}
       _ => panic!("not"),
     }
   }

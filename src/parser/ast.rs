@@ -2,6 +2,8 @@
 pub enum Types {
   Call(CallAST),
   Strings(StringAST),
+  Number(NumberAST),
+  Binary(BinaryAST),
   Variable(VariableAST),
 }
 
@@ -32,13 +34,45 @@ impl CallAST{
 
 #[derive(Debug, Clone)]
 pub struct StringAST{
-  pub strings:String
+  pub strings:String,
+  pub node: Vec<Types>,
 }
 
 impl StringAST{
   pub fn new(strings:&str) -> Self {
     StringAST{
-      strings:strings.to_string()
+      strings:strings.to_string(),
+      node:Vec::new(),
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct NumberAST {
+  pub num: i64,
+  pub node: Vec<Types>,
+}
+
+impl NumberAST {
+  pub fn new(num:i64) -> Self {
+    Self{
+      num,
+      node: Vec::new()
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct BinaryAST {
+  pub op: char,
+  pub node: Vec<Types>,
+}
+
+impl BinaryAST {
+  pub fn new(op:char) -> Self {
+    Self{
+      op,
+      node:Vec::new(),
     }
   }
 }
