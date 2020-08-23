@@ -1,12 +1,11 @@
 use super::super::parser::ast;
 
+use inkwell::OptimizationLevel;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::execution_engine::{ExecutionEngine, JitFunction};
 use inkwell::module::Module;
 use inkwell::targets::{InitializationConfig, Target};
-use inkwell::OptimizationLevel;
-use std::error::Error;
 
 pub struct CodeGen<'ctx> {
   pub context: &'ctx Context,
@@ -58,6 +57,10 @@ impl<'ctx> CodeGen<'ctx>  {
       }
 
       ast::Types::Strings(string) => {}
+
+      ast::Types::Binary(bin) => {
+        
+      }
 
       _ => {}
     }

@@ -70,7 +70,26 @@ impl Persers {
     if token == TOKEN._number {
       let value = self.get_tokens(self.index).get_value().parse().unwrap();
       let number = ast::NumberAST::new(value);
-      return Ok(ast::Types::Number(number));
+      let numbe_types = ast::Types::Number(number);
+      let check = self.check_calc(&numbe_types);
+      match check {
+        Some(mut bin) => {
+          self.index_add(1);
+          let inner = self.judge();
+          match inner {
+            Ok(t) => {
+              bin.node.push(t);
+            }
+
+            Err(()) => {}
+          }
+          return Ok(ast::Types::Binary(bin));
+        }
+
+        None => {
+          return Ok(numbe_types);
+        }
+      }
     }
 
     if token == TOKEN._string {
@@ -82,13 +101,13 @@ impl Persers {
     return Err(());
   }
 
-  fn check_calc(&mut self, inner:ast::Types) -> Option<ast::BinaryAST> {
+  fn check_calc(&mut self, inner:&ast::Types) -> Option<ast::BinaryAST> {
     let token = self.get_tokens(self.index + 1).get_token();
     if token == TOKEN._add || token == TOKEN._sub || token == TOKEN._div || token == TOKEN._multi {
       self.index_add(1);
       let value = self.get_tokens(self.index).get_value();
       let mut binary = ast::BinaryAST::new(value.chars().nth(0).unwrap());
-      binary.node.push(inner);
+      binary.node.push(inner.clone());
       return Some(binary);
     }
     return None;
