@@ -58,8 +58,6 @@ impl Persers {
 
           Err(()) => {}
         }
-
-        self.index_add(1);
         return Ok(ast::Types::Call(callee));
       }
 
@@ -74,14 +72,13 @@ impl Persers {
       let check = self.check_calc(&numbe_types);
       match check {
         Some(mut bin) => {
-          self.index_add(1);
-          let inner = self.judge();
+          let inner = self.judge_calc();
           match inner {
-            Ok(t) => {
+            Some(t) => {
               bin.node.push(t);
             }
 
-            Err(()) => {}
+            None => {}
           }
           return Ok(ast::Types::Binary(bin));
         }
@@ -101,16 +98,63 @@ impl Persers {
     return Err(());
   }
 
-  fn check_calc(&mut self, inner:&ast::Types) -> Option<ast::BinaryAST> {
-    let token = self.get_tokens(self.index + 1).get_token();
-    if token == TOKEN._add || token == TOKEN._sub || token == TOKEN._div || token == TOKEN._multi {
-      self.index_add(1);
-      let value = self.get_tokens(self.index).get_value();
-      let mut binary = ast::BinaryAST::new(value.chars().nth(0).unwrap());
-      binary.node.push(inner.clone());
-      return Some(binary);
+  fn check_calc(&mut self, inner: &ast::Types) -> Option<ast::BinaryAST> {
+    if self.tokens.len() > self.index + 1 {
+      let token = self.get_tokens(self.index + 1).get_token();
+      if token == TOKEN._add || token == TOKEN._sub || token == TOKEN._div || token == TOKEN._multi
+      {
+        self.index_add(1);
+        let value = self.get_tokens(self.index).get_value();
+        let mut binary = ast::BinaryAST::new(value.chars().nth(0).unwrap());
+        binary.node.push(inner.clone());
+        return Some(binary);
+      }
     }
     return None;
+  }
+
+  fn judge_calc(&mut self) -> Option<ast::Types> {
+    let len = self.tokens.len();
+    if len <= self.index + 1 {
+      return None;
+    }
+
+    self.index_add(1);
+    let token = self.get_tokens(self.index).get_token();
+    if token == TOKEN._add || token == TOKEN._sub || token == TOKEN._div || token == TOKEN._multi {
+      let mut ast_bin = ast::BinaryAST::new(
+        self
+          .get_tokens(self.index)
+          .get_value()
+          .chars()
+          .nth(0)
+          .unwrap(),
+      );
+
+      match self.judge_calc() {
+        Some(t) => {
+          ast_bin.node.push(t);
+        }
+
+        None => {}
+      }
+      return Some(ast::Types::Binary(ast_bin));
+    }
+
+    if token == TOKEN._number {
+      let mut ast_num =
+        ast::NumberAST::new(self.get_tokens(self.index).get_value().parse().unwrap());
+      match self.judge_calc() {
+        Some(t) => {
+          ast_num.node.push(t);
+        }
+
+        None => {}
+      }
+      return Some(ast::Types::Number(ast_num));
+    }
+
+    None
   }
 
   fn get_tokens(&mut self, num: usize) -> &lelex::tokens::Tokens {
@@ -167,6 +211,17 @@ mod tests {
     let result = parser.run();
     match result.node[0] {
       ast::Types::Number(_) => {}
+      _ => panic!("not"),
+    }
+  }
+
+  #[test]
+  fn calu() {
+    let lex_result = lexers::run("1 + 1 + 1 + 1");
+    let mut parser = parsers::Persers::new(lex_result);
+    let result = parser.run();
+    match result.node[0] {
+      ast::Types::Binary(_) => {}
       _ => panic!("not"),
     }
   }

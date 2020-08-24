@@ -1,11 +1,11 @@
 use super::super::parser::ast;
 
-use inkwell::OptimizationLevel;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::execution_engine::{ExecutionEngine, JitFunction};
 use inkwell::module::Module;
 use inkwell::targets::{InitializationConfig, Target};
+use inkwell::OptimizationLevel;
 
 pub struct CodeGen<'ctx> {
   pub context: &'ctx Context,
@@ -32,7 +32,7 @@ pub fn jit_compile(ast: ast::RootAST) {
   code_gen.set_return();
 }
 
-impl<'ctx> CodeGen<'ctx>  {
+impl<'ctx> CodeGen<'ctx> {
   pub fn add_fun_print(&mut self) {
     let i32_type = self.context.i32_type();
     let putchar_type = i32_type.fn_type(&[i32_type.into()], false);
@@ -42,7 +42,7 @@ impl<'ctx> CodeGen<'ctx>  {
   pub fn judge(&mut self, types: &ast::Types) {
     match types {
       ast::Types::Call(call) => {
-        if call.callee == "print" && call.argument.len() < 2{
+        if call.callee == "print" && call.argument.len() < 2 {
           match &call.argument[0] {
             ast::Types::Strings(strings) => {
               self.print_string(&strings.strings);
@@ -54,7 +54,6 @@ impl<'ctx> CodeGen<'ctx>  {
 
             ast::Types::Binary(bin) => {
               let sum = self.calcuration(bin);
-              self.print_string(&sum.print_to_string().to_string());
             }
             _ => {}
           }
@@ -64,7 +63,7 @@ impl<'ctx> CodeGen<'ctx>  {
       ast::Types::Strings(string) => {}
 
       ast::Types::Binary(bin) => {
-        
+        let result = self.calcuration(bin);
       }
 
       _ => {}
@@ -85,6 +84,9 @@ impl<'ctx> CodeGen<'ctx>  {
       .builder
       .build_return(Some(&i32_type.const_int(0, false)));
     self.module.print_to_stderr();
-    self.module.print_to_file("./build/hello.ll").expect("faild");
+    self
+      .module
+      .print_to_file("./build/hello.ll")
+      .expect("faild");
   }
 }
