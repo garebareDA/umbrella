@@ -31,7 +31,7 @@ end:                                              ; preds = %else, %then
 
 define i32 @ifs.1() {
 entry:
-  br i1 true, label %then, label %else
+  br i1 false, label %then, label %else
 
 then:                                             ; preds = %entry
   %putchar = call i32 @putchar(i32 104)

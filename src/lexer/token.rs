@@ -30,7 +30,7 @@ impl Token{
       _else:-6,
       _equal: 61,
       _greater:62,
-      _less:63,
+      _less:60,
       _add: 43,
       _sub: 45,
       _multi: 47,
