@@ -64,6 +64,9 @@ impl<'ctx> CodeGen<'ctx> {
 
       ast::Types::Binary(bin) => {
         let result = self.calcuration(bin);
+        self
+        .builder
+        .build_return(Some(&result));
       }
 
       _ => {}
