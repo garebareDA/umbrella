@@ -45,9 +45,9 @@ impl Persers {
     loop {
       let token = self.get_tokens(self.index).get_token();
       if token == TOKEN._braces_right {
-        self.index_add(1);
         return types;
       }
+
       let result = self.judge();
       match result {
         Ok(r) => {
@@ -132,8 +132,8 @@ impl Persers {
             //error
           }
 
-          if self.get_tokens(self.index).get_token() == TOKEN._else {
-            self.index_add(1);
+          if self.get_tokens(self.index + 1).get_token() == TOKEN._else {
+            self.index_add(2);
             if self.get_tokens(self.index).get_token() == TOKEN._braces_left {
               self.index_add(1);
               ifs.elses = self.scope();

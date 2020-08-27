@@ -28,7 +28,9 @@ impl<'ctx> CodeGen<'ctx> {
       Types::Number(num) => {
         let num_i32 = self.context.i32_type();
         number_stack.push(num_i32.const_int(num.num as u64, false));
-        self.calcuration_stack(&mut op_stack, &mut number_stack, &num.node[0]);
+        if bin.node.len() > 1 && !num.node.is_empty(){
+          self.calcuration_stack(&mut op_stack, &mut number_stack, &num.node[0]);
+        }
       }
 
       _ => {
@@ -38,19 +40,22 @@ impl<'ctx> CodeGen<'ctx> {
 
     let mut cal_counter = 0;
     for (i, op) in op_stack.iter().enumerate() {
+      if number_stack.len() == 1 {
+        break
+      }
       let l_index = i - cal_counter;
       let r_index = i - cal_counter + 1;
 
       let l_stack = number_stack[l_index];
-      let r_stack=number_stack[r_index];
+      let r_stack = number_stack[r_index];
 
-      if op == &'/'{
+      if op == &'/' {
         let sum = self.builder.build_int_unsigned_div(l_stack, r_stack, "div");
         number_stack[l_index] = sum;
         number_stack.remove(r_index);
       }
 
-      if op == &'*'{
+      if op == &'*' {
         let sum = self.builder.build_int_mul(l_stack, r_stack, "mul");
         number_stack[l_index] = sum;
         number_stack.remove(r_index);
@@ -61,48 +66,81 @@ impl<'ctx> CodeGen<'ctx> {
 
     let mut cal_counter = 0;
     for (i, op) in op_stack.iter().enumerate() {
+      if number_stack.len() == 1 {
+        break
+      }
       let l_index = i - cal_counter;
       let r_index = i - cal_counter + 1;
 
       let l_stack = number_stack[l_index];
-      let r_stack =number_stack[r_index];
+      let r_stack = number_stack[r_index];
 
-      if op == &'+'{
-       let sum = self.builder.build_int_add(l_stack, r_stack, "sum");
-       number_stack[l_index] = sum;
-       number_stack.remove(r_index);
-     }
+      if op == &'+' {
+        let sum = self.builder.build_int_add(l_stack, r_stack, "sum");
+        number_stack[l_index] = sum;
+        number_stack.remove(r_index);
+      }
 
-     if op == &'-'{
-       let sum = self.builder.build_int_sub(l_stack, r_stack, "sub");
-       number_stack[l_index] = sum;
-       number_stack.remove(r_index);
-     }
+      if op == &'-' {
+        let sum = self.builder.build_int_sub(l_stack, r_stack, "sub");
+        number_stack[l_index] = sum;
+        number_stack.remove(r_index);
+      }
 
-     cal_counter += 1;
-   }
+      cal_counter += 1;
+    }
 
-   return number_stack[0];
+    let mut cal_counter = 0;
+    for (i, op) in op_stack.iter().enumerate() {
+      if number_stack.len() == 1 {
+        break
+      }
+      let l_index = i - cal_counter;
+      let r_index = i - cal_counter + 1;
+
+      let l_stack = number_stack[l_index];
+      let r_stack = number_stack[r_index];
+
+      if op == &'<' {
+        let sum = self.builder.build_int_compare(inkwell::IntPredicate::SLT, l_stack, r_stack, "lessthan");
+        number_stack[l_index] = sum;
+        number_stack.remove(r_index);
+      }
+
+      if op == &'>' {
+        let sum = self.builder.build_int_compare(inkwell::IntPredicate::SGT, l_stack, r_stack, "greaterthan");
+        number_stack[l_index] = sum;
+        number_stack.remove(r_index);
+      }
+
+      cal_counter += 1;
+    }
+
+    return number_stack[0];
   }
 
-  fn calcuration_stack (&self, op_stack: &mut Vec<char>, number_stack: &mut Vec<values::IntValue<'ctx>>, types: &ast::Types) {
+  fn calcuration_stack(
+    &self,
+    op_stack: &mut Vec<char>,
+    number_stack: &mut Vec<values::IntValue<'ctx>>,
+    types: &ast::Types,
+  ) {
     let num_i32 = self.context.i32_type();
     match types {
       ast::Types::Number(num) => {
         let numi = num_i32.const_int(num.num as u64, false);
         number_stack.push(numi);
-        if !&num.node.is_empty(){
+        if !&num.node.is_empty() {
           self.calcuration_stack(op_stack, number_stack, &num.node[0]);
         }
       }
 
       ast::Types::Binary(op) => {
         op_stack.push(op.op);
-        if !&op.node.is_empty(){
+        if !&op.node.is_empty() {
           self.calcuration_stack(op_stack, number_stack, &op.node[0]);
         }
       }
-
       _ => {}
     }
   }
