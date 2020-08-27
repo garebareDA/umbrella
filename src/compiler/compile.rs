@@ -54,19 +54,11 @@ impl<'ctx> CodeGen<'ctx> {
 
             ast::Types::Binary(bin) => {
               let sum = self.calcuration(bin);
+              self.print_string(&sum.print_to_string().to_string());
             }
             _ => {}
           }
         }
-      }
-
-      ast::Types::Strings(string) => {}
-
-      ast::Types::Binary(bin) => {
-        let result = self.calcuration(bin);
-        self
-        .builder
-        .build_return(Some(&result));
       }
 
       _ => {}
