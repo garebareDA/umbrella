@@ -1,1 +1,6 @@
 print(12 + 1 + 1);
+if 1 > 0 {
+  print("hello");
+}else {
+  print("world");
+}

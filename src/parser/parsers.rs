@@ -31,12 +31,36 @@ impl Persers {
         Err(()) => {}
       }
 
-      self.index += 1;
+      self.index_add(1);
       if len <= self.index {
         break;
       }
     }
     return root;
+  }
+
+  pub fn scope(&mut self) -> Vec<ast::Types> {
+    let len = self.tokens.len();
+    let mut types: Vec<ast::Types> = Vec::new();
+    loop {
+      let token = self.get_tokens(self.index).get_token();
+      if token == TOKEN._braces_right {
+        self.index_add(1);
+        return types;
+      }
+      let result = self.judge();
+      match result {
+        Ok(r) => {
+          types.push(r);
+        }
+        Err(()) => {}
+      }
+
+      self.index_add(1);
+      if len <= self.index {
+        return types;
+      }
+    }
   }
 
   fn judge(&mut self) -> Result<ast::Types, ()> {
@@ -95,13 +119,50 @@ impl Persers {
       return Ok(ast::Types::Strings(strings));
     }
 
+    if token == TOKEN._if {
+      self.index_add(1);
+      match self.judge() {
+        Ok(types) => {
+          let mut ifs = ast::IfsAST::new();
+          ifs.ifs.push(types);
+          if self.get_tokens(self.index).get_token() == TOKEN._braces_left {
+            self.index_add(1);
+            ifs.then = self.scope();
+          } else {
+            //error
+          }
+
+          if self.get_tokens(self.index).get_token() == TOKEN._else {
+            self.index_add(1);
+            if self.get_tokens(self.index).get_token() == TOKEN._braces_left {
+              self.index_add(1);
+              ifs.elses = self.scope();
+            } else {
+              //error
+            }
+          }
+
+          return Ok(ast::Types::Ifs(ifs));
+        }
+
+        Err(()) => {
+          //error
+        }
+      };
+    }
+
     return Err(());
   }
 
   fn check_calc(&mut self, inner: &ast::Types) -> Option<ast::BinaryAST> {
     if self.tokens.len() > self.index + 1 {
       let token = self.get_tokens(self.index + 1).get_token();
-      if token == TOKEN._add || token == TOKEN._sub || token == TOKEN._div || token == TOKEN._multi
+      if token == TOKEN._add
+        || token == TOKEN._sub
+        || token == TOKEN._div
+        || token == TOKEN._multi
+        || token == TOKEN._greater
+        || token == TOKEN._less
       {
         self.index_add(1);
         let value = self.get_tokens(self.index).get_value();
@@ -121,7 +182,13 @@ impl Persers {
 
     self.index_add(1);
     let token = self.get_tokens(self.index).get_token();
-    if token == TOKEN._add || token == TOKEN._sub || token == TOKEN._div || token == TOKEN._multi {
+    if token == TOKEN._add
+      || token == TOKEN._sub
+      || token == TOKEN._div
+      || token == TOKEN._multi
+      || token == TOKEN._greater
+      || token == TOKEN._less
+    {
       let mut ast_bin = ast::BinaryAST::new(
         self
           .get_tokens(self.index)
@@ -222,6 +289,24 @@ mod tests {
     let result = parser.run();
     match result.node[0] {
       ast::Types::Binary(_) => {}
+      _ => panic!("not"),
+    }
+  }
+
+  #[test]
+
+  fn ifs() {
+    let lex_result = lexers::run(
+      "if 1 > 0 {
+      print(\"hello\");
+    }else {
+      print(\"world\");
+    }",
+    );
+    let mut parser = parsers::Persers::new(lex_result);
+    let result = parser.run();
+    match result.node[0] {
+      ast::Types::Ifs(_) => {}
       _ => panic!("not"),
     }
   }

@@ -56,6 +56,10 @@ impl<'ctx> CodeGen<'ctx> {
               let sum = self.calcuration(bin);
               self.print_string(&sum.print_to_string().to_string());
             }
+
+            ast::Types::Ifs(ifs) => {
+              
+            }
             _ => {}
           }
         }

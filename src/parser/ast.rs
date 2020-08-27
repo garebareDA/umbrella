@@ -5,6 +5,7 @@ pub enum Types {
   Number(NumberAST),
   Binary(BinaryAST),
   Variable(VariableAST),
+  Ifs(IfsAST),
 }
 
 #[derive(Debug)]
@@ -88,6 +89,23 @@ impl VariableAST{
     VariableAST{
       name:name.to_string(),
       node:Vec::new()
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct IfsAST{
+  pub ifs:Vec<Types>,
+  pub then: Vec<Types>,
+  pub elses: Vec<Types>,
+}
+
+impl IfsAST {
+  pub fn new() -> Self {
+    Self{
+      ifs:Vec::new(),
+      then:Vec::new(),
+      elses:Vec::new(),
     }
   }
 }
