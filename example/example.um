@@ -10,3 +10,7 @@ if 1 < 0 {
 }else {
   print("world");
 }
+
+for let i = 0; i < 5; i++ {
+  print("hello");
+}
