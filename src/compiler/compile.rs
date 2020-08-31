@@ -17,7 +17,7 @@ pub struct CodeGen<'ctx> {
   pub context: &'ctx Context,
   pub module: Module<'ctx>,
   pub builder: Builder<'ctx>,
-  pub var_vec:Vec<Vec<var<'ctx>>>,
+  pub var_vec:Vec<Vec<Var<'ctx>>>,
   pub if_gen_stack: usize,
 }
 
