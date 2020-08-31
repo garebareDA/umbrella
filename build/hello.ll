@@ -8,7 +8,7 @@ entry:
   br label %preloop
 
 preloop:                                          ; preds = %loop, %entry
-  %i = phi i32 [ 1, %entry ]
+  %i = phi i32 [ 0, %entry ]
 
 loop:                                             ; No predecessors!
   %putchar = call i32 @putchar(i32 104)

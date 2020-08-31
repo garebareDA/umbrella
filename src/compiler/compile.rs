@@ -2,16 +2,23 @@ use super::super::parser::ast;
 
 use inkwell::builder::Builder;
 use inkwell::context::Context;
+use inkwell::values;
 use inkwell::execution_engine::{ExecutionEngine, JitFunction};
 use inkwell::module::Module;
 use inkwell::targets::{InitializationConfig, Target};
 use inkwell::OptimizationLevel;
 
+pub struct var <'ctx> {
+  name:String,
+  value:&'ctx values::BasicValue<'ctx>,
+}
+
 pub struct CodeGen<'ctx> {
   pub context: &'ctx Context,
   pub module: Module<'ctx>,
   pub builder: Builder<'ctx>,
-  pub code_gen_stack: usize,
+  pub var_vec:Vec<var<'ctx>>,
+  pub if_gen_stack: usize,
 }
 
 pub fn jit_compile(ast: ast::RootAST) {
@@ -23,7 +30,8 @@ pub fn jit_compile(ast: ast::RootAST) {
     context: &context,
     module,
     builder,
-    code_gen_stack: 0,
+    var_vec:Vec::new(),
+    if_gen_stack: 0,
   };
   code_gen.add_fun_print();
 
@@ -75,16 +83,16 @@ impl<'ctx> CodeGen<'ctx> {
       }
 
       ast::Types::Ifs(_) => {
-        if self.code_gen_stack == 0 {
+        if self.if_gen_stack == 0 {
           let ifs = self.module.get_function("ifs");
           self.builder.build_call(ifs.unwrap(), &[], "ifs");
-          self.code_gen_stack += 1;
+          self.if_gen_stack += 1;
           return
         }
 
-        let ifs = self.module.get_function(&format!("{}.{}","ifs", self.code_gen_stack));
+        let ifs = self.module.get_function(&format!("{}.{}","ifs", self.if_gen_stack));
         self.builder.build_call(ifs.unwrap(), &[], "ifs");
-        self.code_gen_stack += 1;
+        self.if_gen_stack += 1;
       }
 
       _ => {}
