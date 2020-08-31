@@ -8,7 +8,7 @@ use inkwell::module::Module;
 use inkwell::targets::{InitializationConfig, Target};
 use inkwell::OptimizationLevel;
 
-pub struct var <'ctx> {
+pub struct Var <'ctx> {
   name:String,
   value:&'ctx values::BasicValue<'ctx>,
 }
