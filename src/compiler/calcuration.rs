@@ -141,6 +141,20 @@ impl<'ctx> CodeGen<'ctx> {
           self.calcuration_stack(op_stack, number_stack, &op.node[0]);
         }
       }
+
+      ast::Types::Variable(vars) => {
+        if vars.node.is_empty() {
+          
+        }
+
+        match &vars.node[0] {
+          ast::Types::Number(num) => {
+            self.calcuration_stack(op_stack, number_stack, &num.node[0]);
+          }
+
+          _ => {}
+        }
+      }
       _ => {}
     }
   }

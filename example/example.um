@@ -1,3 +1,7 @@
 for let i = 0; i < 5; i++ {
   print("hello");
 }
+
+if 0 < 1 {
+  print("hello");
+}

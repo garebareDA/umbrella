@@ -42,64 +42,11 @@ impl<'ctx> CodeGen<'ctx> {
   pub fn set_functions(&mut self, types: &ast::Types) {
     match types {
       ast::Types::Ifs(ifs) => {
-        let i32_type = self.context.i32_type();
-        let main_type = i32_type.fn_type(&[], false);
-        let function = self.module.add_function("ifs", main_type, None);
-        let basic_block_entry = self.context.append_basic_block(function, "entry");
-
-        match &ifs.ifs[0] {
-          ast::Types::Binary(bin) => {
-            let basic_block_then = self.context.append_basic_block(function, "then");
-            self.builder.position_at_end(basic_block_then);
-
-            for ast in ifs.then.iter() {
-              self.judge(&ast);
-            }
-
-            let basic_block_else = self.context.append_basic_block(function, "else");
-            self.builder.position_at_end(basic_block_else);
-
-            for ast in &ifs.elses {
-              self.judge(&ast);
-            }
-
-            self.builder.position_at_end(basic_block_entry);
-            let sum = self.calcuration(&bin);
-            self
-              .builder
-              .build_conditional_branch(sum, basic_block_then, basic_block_else);
-
-            let basic_block_end = self.context.append_basic_block(function, "end");
-            self.builder.position_at_end(basic_block_end);
-            self
-              .builder
-              .build_return(Some(&i32_type.const_int(0, false)));
-
-            self.builder.position_at_end(basic_block_then);
-            self.builder.build_unconditional_branch(basic_block_end);
-
-            self.builder.position_at_end(basic_block_else);
-            self.builder.build_unconditional_branch(basic_block_end);
-          }
-          _ => {}
-        }
+        self.if_write(&ifs);
       }
 
       ast::Types::Fors(fors) => {
-        let i32_type = self.context.i32_type();
-        let main_type = i32_type.fn_type(&[], false);
-        let function = self.module.add_function("fors", main_type, None);
-        let basic_block_entry = self.context.append_basic_block(function, "entry");
-        let basic_block_preloop = self.context.append_basic_block(function, "preloop");
-        let basic_block_loop = self.context.append_basic_block(function, "loop");
-        let basic_block_afterloop = self.context.append_basic_block(function, "afterloop");
-
-        self.builder.position_at_end(basic_block_entry);
-        self.builder.build_unconditional_branch(basic_block_preloop);
-        self.builder.position_at_end(basic_block_preloop);
-        let variable = self.builder.build_phi(i32_type, "i");
-        variable.add_incoming(&[(&i32_type.const_int(1, false), basic_block_entry)]);
-        
+        self.for_write(&fors);
       }
       _ => {}
     }

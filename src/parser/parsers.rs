@@ -169,6 +169,10 @@ impl Persers {
             //error
           }
 
+          if self.tokens.len() <= self.index + 1 {
+            return Ok(ast::Types::Ifs(ifs));
+          }
+
           if self.get_tokens(self.index + 1).get_token() == TOKEN._else {
             self.index_add(2);
             if self.get_tokens(self.index).get_token() == TOKEN._braces_left {
