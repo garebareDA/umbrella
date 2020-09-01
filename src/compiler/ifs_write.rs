@@ -12,17 +12,11 @@ impl<'ctx> CodeGen<'ctx> {
       ast::Types::Binary(bin) => {
         let basic_block_then = self.context.append_basic_block(function, "then");
         self.builder.position_at_end(basic_block_then);
-
-        for ast in ifs.then.iter() {
-          self.judge(&ast);
-        }
+        self.scope_write(&ifs.then, basic_block_then);
 
         let basic_block_else = self.context.append_basic_block(function, "else");
         self.builder.position_at_end(basic_block_else);
-
-        for ast in &ifs.elses {
-          self.judge(&ast);
-        }
+        self.scope_write(&ifs.elses, basic_block_else);
 
         self.builder.position_at_end(basic_block_entry);
         let sum = self.calcuration(&bin);
@@ -38,7 +32,6 @@ impl<'ctx> CodeGen<'ctx> {
 
         self.builder.position_at_end(basic_block_then);
         self.builder.build_unconditional_branch(basic_block_end);
-
         self.builder.position_at_end(basic_block_else);
         self.builder.build_unconditional_branch(basic_block_end);
       }

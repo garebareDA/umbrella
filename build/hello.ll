@@ -3,6 +3,12 @@ source_filename = "main"
 
 declare i32 @putchar(i32)
 
+define i32 @main() {
+entry:
+  %ifs = call i32 @ifs()
+  ret i32 0
+}
+
 define i32 @fors() {
 entry:
   br label %preloop
@@ -40,11 +46,5 @@ else:                                             ; preds = %entry
   br label %end
 
 end:                                              ; preds = %else, %then
-  ret i32 0
-}
-
-define i32 @main() {
-entry:
-  %ifs = call i32 @ifs()
   ret i32 0
 }

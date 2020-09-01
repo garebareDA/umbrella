@@ -10,7 +10,7 @@ use inkwell::OptimizationLevel;
 
 pub struct Var <'ctx> {
   name:String,
-  value:&'ctx values::BasicValue<'ctx>,
+  value:&'ctx values::AnyValue<'ctx>,
 }
 
 pub struct CodeGen<'ctx> {
@@ -34,33 +34,12 @@ pub fn jit_compile(ast: ast::RootAST) {
     if_gen_stack: 0,
   };
   code_gen.add_fun_print();
-
-  for ast in ast.node.iter() {
-    code_gen.set_functions(ast);
-  }
-
-  code_gen.set_main();
-  for ast in ast.node.iter() {
-    code_gen.judge(ast);
-  }
+  code_gen.set_main_run(&ast.node);
   code_gen.set_return();
 }
 
 impl<'ctx> CodeGen<'ctx> {
-  pub fn set_functions(&mut self, types: &ast::Types) {
-    match types {
-      ast::Types::Ifs(ifs) => {
-        self.if_write(&ifs);
-      }
-
-      ast::Types::Fors(fors) => {
-        self.for_write(&fors);
-      }
-      _ => {}
-    }
-  }
-
-  pub fn judge(&mut self, types: &ast::Types) {
+  pub fn judge(&mut self, types: &ast::Types, basic_block:inkwell::basic_block::BasicBlock) {
     match types {
       ast::Types::Call(call) => {
         if call.callee == "print" && call.argument.len() < 2 {
@@ -82,7 +61,9 @@ impl<'ctx> CodeGen<'ctx> {
         }
       }
 
-      ast::Types::Ifs(_) => {
+      ast::Types::Ifs(ifs) => {
+        self.if_write(&ifs);
+        self.builder.position_at_end(basic_block);
         if self.if_gen_stack == 0 {
           let ifs = self.module.get_function("ifs");
           self.builder.build_call(ifs.unwrap(), &[], "ifs");
@@ -95,15 +76,27 @@ impl<'ctx> CodeGen<'ctx> {
         self.if_gen_stack += 1;
       }
 
+      ast::Types::Fors(fors) => {
+        self.for_write(&fors);
+      }
+
       _ => {}
     }
   }
 
-  fn set_main(&mut self) {
+  pub fn scope_write( &mut self, node: &Vec<ast::Types>, basic_block:inkwell::basic_block::BasicBlock) {
+    for ast in node.iter() {
+      self.judge(ast, basic_block);
+      self.builder.position_at_end(basic_block);
+    }
+  }
+
+  fn set_main_run(&mut self, node: &Vec<ast::Types>){
     let i32_type = self.context.i32_type();
     let main_type = i32_type.fn_type(&[], false);
     let function = self.module.add_function("main", main_type, None);
     let basic_block = self.context.append_basic_block(function, "entry");
+    self.scope_write(node, basic_block);
     self.builder.position_at_end(basic_block);
   }
 

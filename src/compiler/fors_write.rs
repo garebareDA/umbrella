@@ -18,14 +18,10 @@ impl<'ctx> CodeGen<'ctx> {
     let (var_name, num_i32) = self.fors_init_inner(&fors.init[0]).unwrap();
     let variable = self.builder.build_phi(i32_type, &var_name);
     variable.add_incoming(&[(&num_i32, basic_block_entry)]);
-    
 
     self.builder.position_at_end(basic_block_loop);
-    for ast in fors.node.iter() {
-      self.judge(&ast);
-    }
+    self.scope_write(&fors.node, basic_block_loop);
     self.builder.build_unconditional_branch(basic_block_preloop);
-
     self.builder.position_at_end(basic_block_afterloop);
     self
       .builder
