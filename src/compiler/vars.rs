@@ -38,7 +38,15 @@ impl<'ctx> CodeGen<'ctx> {
     self.var_vec[len].push(var_value);
   }
 
-  pub fn vars_serch(&self, name:&str) {
-    
+  pub fn vars_serch(&mut self, name:&str) -> Result<&Var, ()>{
+    for reverse in  self.var_vec.iter().rev(){
+      for vars in reverse.iter().rev() {
+        if vars.get_name() == name {
+          return Ok(&vars);
+        }
+      }
+    }
+
+    return Err(());
   }
 }

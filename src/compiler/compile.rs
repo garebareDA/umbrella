@@ -3,11 +3,7 @@ use super::vars::Var;
 
 use inkwell::builder::Builder;
 use inkwell::context::Context;
-use inkwell::values;
-use inkwell::execution_engine::{ExecutionEngine, JitFunction};
 use inkwell::module::Module;
-use inkwell::targets::{InitializationConfig, Target};
-use inkwell::OptimizationLevel;
 
 pub struct CodeGen<'ctx> {
   pub context: &'ctx Context,
