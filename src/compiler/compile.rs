@@ -10,7 +10,7 @@ use inkwell::OptimizationLevel;
 
 pub struct Var <'ctx> {
   name:String,
-  value:&'ctx values::AnyValue<'ctx>,
+  value:values::AnyValueEnum<'ctx>,
 }
 
 pub struct CodeGen<'ctx> {
