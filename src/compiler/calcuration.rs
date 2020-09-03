@@ -144,7 +144,12 @@ impl<'ctx> CodeGen<'ctx> {
 
       ast::Types::Variable(vars) => {
         if vars.node.is_empty() {
-          
+          let name = &vars.name;
+          //TODO サーチ関数を作成
+          /*match self.vars_serch(name) {
+            
+          }
+          */
         }
 
         match &vars.node[0] {

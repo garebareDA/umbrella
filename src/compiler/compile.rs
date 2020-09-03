@@ -1,4 +1,5 @@
 use super::super::parser::ast;
+use super::vars::Var;
 
 use inkwell::builder::Builder;
 use inkwell::context::Context;
@@ -7,11 +8,6 @@ use inkwell::execution_engine::{ExecutionEngine, JitFunction};
 use inkwell::module::Module;
 use inkwell::targets::{InitializationConfig, Target};
 use inkwell::OptimizationLevel;
-
-pub struct Var <'ctx> {
-  name:String,
-  value:values::AnyValueEnum<'ctx>,
-}
 
 pub struct CodeGen<'ctx> {
   pub context: &'ctx Context,
