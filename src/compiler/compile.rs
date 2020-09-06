@@ -11,6 +11,7 @@ pub struct CodeGen<'ctx> {
   pub builder: Builder<'ctx>,
   pub var_vec:Vec<Vec<Var<'ctx>>>,
   pub if_gen_stack: usize,
+  pub for_gen_stack: usize
 }
 
 pub fn jit_compile(ast: ast::RootAST) {
@@ -24,6 +25,7 @@ pub fn jit_compile(ast: ast::RootAST) {
     builder,
     var_vec:Vec::new(),
     if_gen_stack: 0,
+    for_gen_stack: 0,
   };
   code_gen.add_fun_print();
   code_gen.set_main_run(&ast.node);
@@ -70,6 +72,17 @@ impl<'ctx> CodeGen<'ctx> {
 
       ast::Types::Fors(fors) => {
         self.for_write(&fors);
+        self.builder.position_at_end(basic_block);
+        if self.for_gen_stack == 0 {
+          let ifs = self.module.get_function("fors");
+          self.builder.build_call(ifs.unwrap(), &[], "fors");
+          self.for_gen_stack+= 1;
+          return
+        }
+
+        let fors = self.module.get_function(&format!("{}.{}","fors", self.for_gen_stack));
+        self.builder.build_call(fors.unwrap(), &[], "fors");
+        self.for_gen_stack += 1;
       }
 
       _ => {}
@@ -107,7 +120,7 @@ impl<'ctx> CodeGen<'ctx> {
     self.module.print_to_stderr();
     self
       .module
-      .print_to_file("./build/hello.ll")
+      .print_to_file("./build/test.ll")
       .expect("faild");
   }
 }

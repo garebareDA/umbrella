@@ -44,8 +44,29 @@ impl<'ctx> CodeGen<'ctx> {
         }
       }
 
+      Types::Binary(bin) => {
+        op_stack.push(bin.op);
+      }
+
       _ => {
         //error
+      }
+    }
+
+    if op_stack.len() == 2 && number_stack.len() == 1 {
+      let num_i32 = self.context.i32_type();
+      if op_stack[0] == '+' && op_stack[1] == '+' {
+        let l_stack = self.change_value(number_stack[0]).unwrap();
+        let r_stack = num_i32.const_int(1 as u64, false);
+        let sum = self.builder.build_int_add(l_stack, r_stack, "sum");
+        return sum;
+      }
+
+      if op_stack[0] == '-' && op_stack[1] == '-' {
+        let l_stack = self.change_value(number_stack[0]).unwrap();
+        let r_stack = num_i32.const_int(1 as u64, false);
+        let sum = self.builder.build_int_sub(l_stack, r_stack, "sub");
+        return sum;
       }
     }
 
@@ -75,7 +96,6 @@ impl<'ctx> CodeGen<'ctx> {
       cal_counter += 1;
     }
 
-    println!("{:?}", op_stack);
     let mut cal_counter = 0;
     for (i, op) in op_stack.iter().enumerate() {
       if number_stack.len() == 1 {

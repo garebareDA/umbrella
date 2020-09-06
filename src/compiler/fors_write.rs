@@ -23,13 +23,15 @@ impl<'ctx> CodeGen<'ctx> {
 
     let for_ifs = self.fors_ifs_init(&fors.ifs[0]);
     let sum = self.calcuration(&for_ifs.unwrap());
-    sum.print_to_stderr();
     self
     .builder
     .build_conditional_branch(sum, basic_block_loop, basic_block_afterloop);
 
     self.builder.position_at_end(basic_block_loop);
     self.scope_write(&fors.node, basic_block_loop);
+    let for_count = self.fors_ifs_init(&fors.count[0]);
+    let sum = self.calcuration(&for_count.unwrap());
+    variable.add_incoming(&[(&sum,basic_block_loop)]);
     self.builder.build_unconditional_branch(basic_block_preloop);
     self.builder.position_at_end(basic_block_afterloop);
     self
