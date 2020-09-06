@@ -49,25 +49,24 @@ impl<'ctx> CodeGen<'ctx> {
       let l_index = i - cal_counter;
       let r_index = i - cal_counter + 1;
 
-      let l_stack = number_stack[l_index];
-      let r_stack = number_stack[r_index];
+      let l_stack = self.change_value(number_stack[l_index]).unwrap();
+      let r_stack = self.change_value(number_stack[r_index]).unwrap();
 
       if op == &'/' {
         let sum = self.builder.build_int_unsigned_div(l_stack, r_stack, "div");
-        number_stack[l_index] = sum;
+        number_stack[l_index] = values::AnyValueEnum::IntValue(sum);
         number_stack.remove(r_index);
       }
 
       if op == &'*' {
         let sum = self.builder.build_int_mul(l_stack, r_stack, "mul");
-        number_stack[l_index] = sum;
+        number_stack[l_index] = values::AnyValueEnum::IntValue(sum);
         number_stack.remove(r_index);
       }
 
       cal_counter += 1;
     }
 
-    //引数には variable.as_basic_value().into_int_value()
     let mut cal_counter = 0;
     for (i, op) in op_stack.iter().enumerate() {
       if number_stack.len() == 1 {
@@ -76,18 +75,18 @@ impl<'ctx> CodeGen<'ctx> {
       let l_index = i - cal_counter;
       let r_index = i - cal_counter + 1;
 
-      let l_stack = number_stack[l_index];
-      let r_stack = number_stack[r_index];
+      let l_stack = self.change_value(number_stack[l_index]).unwrap();
+      let r_stack = self.change_value(number_stack[r_index]).unwrap();
 
       if op == &'+' {
         let sum = self.builder.build_int_add(l_stack, r_stack, "sum");
-        number_stack[l_index] = sum;
+        number_stack[l_index] = values::AnyValueEnum::IntValue(sum);
         number_stack.remove(r_index);
       }
 
       if op == &'-' {
         let sum = self.builder.build_int_sub(l_stack, r_stack, "sub");
-        number_stack[l_index] = sum;
+        number_stack[l_index] = values::AnyValueEnum::IntValue(sum);
         number_stack.remove(r_index);
       }
 
@@ -102,25 +101,25 @@ impl<'ctx> CodeGen<'ctx> {
       let l_index = i - cal_counter;
       let r_index = i - cal_counter + 1;
 
-      let l_stack = number_stack[l_index];
-      let r_stack = number_stack[r_index];
+      let l_stack = self.change_value(number_stack[l_index]).unwrap();
+      let r_stack = self.change_value(number_stack[r_index]).unwrap();
 
       if op == &'<' {
         let sum = self.builder.build_int_compare(inkwell::IntPredicate::SLT, l_stack, r_stack, "lessthan");
-        number_stack[l_index] = sum;
+        number_stack[l_index] = values::AnyValueEnum::IntValue(sum);
         number_stack.remove(r_index);
       }
 
       if op == &'>' {
         let sum = self.builder.build_int_compare(inkwell::IntPredicate::SGT, l_stack, r_stack, "greaterthan");
-        number_stack[l_index] = sum;
+        number_stack[l_index] = values::AnyValueEnum::IntValue(sum);
         number_stack.remove(r_index);
       }
 
       cal_counter += 1;
     }
 
-    return number_stack[0];
+    return self.change_value(number_stack[0]).unwrap();
   }
 
   fn calcuration_stack(
@@ -159,6 +158,17 @@ impl<'ctx> CodeGen<'ctx> {
         }
       }
       _ => {}
+    }
+  }
+
+  fn change_value(&self, value:values::AnyValueEnum<'ctx>) -> Result<values::IntValue<'ctx>, ()>{
+    match value {
+      values::AnyValueEnum::IntValue(int) => {Ok(int)}
+      values::AnyValueEnum::PhiValue(phi) => {
+        Ok(phi.as_basic_value().into_int_value())
+      }
+
+      _ => {Err(())}
     }
   }
 }
