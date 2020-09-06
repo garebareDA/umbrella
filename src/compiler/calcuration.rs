@@ -7,16 +7,17 @@ use super::super::parser::ast::Types;
 use super::compile::CodeGen;
 
 impl<'ctx> CodeGen<'ctx> {
-  pub fn calcuration(&self, bin: &ast::BinaryAST) -> values::IntValue {
+  pub fn calcuration(& self, bin: &ast::BinaryAST) -> values::IntValue {
     let mut op_stack: Vec<char> = Vec::new();
-    let mut number_stack: Vec<values::IntValue> = Vec::new();
+    let mut number_stack: Vec<values::AnyValueEnum> = Vec::new();
     let op = bin.op;
     op_stack.push(op);
 
     match &bin.node[0] {
       Types::Number(num) => {
         let num_i32 = self.context.i32_type();
-        number_stack.push(num_i32.const_int(num.num as u64, false));
+        let int = num_i32.const_int(num.num as u64, false);
+        number_stack.push(values::AnyValueEnum::IntValue(int));
       }
 
       _ => {
@@ -27,10 +28,12 @@ impl<'ctx> CodeGen<'ctx> {
     match &bin.node[1] {
       Types::Number(num) => {
         let num_i32 = self.context.i32_type();
-        number_stack.push(num_i32.const_int(num.num as u64, false));
+        let int = num_i32.const_int(num.num as u64, false);
+        number_stack.push(values::AnyValueEnum::IntValue(int));
         if bin.node.len() > 1 && !num.node.is_empty(){
           self.calcuration_stack(&mut op_stack, &mut number_stack, &num.node[0]);
         }
+
       }
 
       _ => {
@@ -64,6 +67,7 @@ impl<'ctx> CodeGen<'ctx> {
       cal_counter += 1;
     }
 
+    //引数には variable.as_basic_value().into_int_value()
     let mut cal_counter = 0;
     for (i, op) in op_stack.iter().enumerate() {
       if number_stack.len() == 1 {
@@ -122,14 +126,14 @@ impl<'ctx> CodeGen<'ctx> {
   fn calcuration_stack(
     &self,
     op_stack: &mut Vec<char>,
-    number_stack: &mut Vec<values::IntValue<'ctx>>,
+    number_stack: &mut Vec<values::AnyValueEnum<'ctx>>,
     types: &ast::Types,
   ) {
     let num_i32 = self.context.i32_type();
     match types {
       ast::Types::Number(num) => {
-        let numi = num_i32.const_int(num.num as u64, false);
-        number_stack.push(numi);
+        let int = num_i32.const_int(num.num as u64, false);
+        number_stack.push(values::AnyValueEnum::IntValue(int));
         if !&num.node.is_empty() {
           self.calcuration_stack(op_stack, number_stack, &num.node[0]);
         }
@@ -143,21 +147,15 @@ impl<'ctx> CodeGen<'ctx> {
       }
 
       ast::Types::Variable(vars) => {
-        if vars.node.is_empty() {
-          let name = &vars.name;
-          //TODO サーチ関数を作成
-          /*match self.vars_serch(name) {
-            
-          }
-          */
-        }
+        match self.vars_serch(&vars.name) {
+          Ok(var) => {
 
-        match &vars.node[0] {
-          ast::Types::Number(num) => {
-            self.calcuration_stack(op_stack, number_stack, &num.node[0]);
+            if !&vars.node.is_empty() {
+              self.calcuration_stack(op_stack, number_stack, &vars.node[0]);
+            }
           }
 
-          _ => {}
+          Err(()) => {}
         }
       }
       _ => {}

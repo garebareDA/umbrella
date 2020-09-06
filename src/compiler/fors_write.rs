@@ -1,5 +1,6 @@
 use super::super::parser::ast;
 use super::compile::CodeGen;
+use inkwell::values;
 
 impl<'ctx> CodeGen<'ctx> {
   pub fn for_write(&mut self, fors: &ast::ForsAST) {
@@ -18,6 +19,8 @@ impl<'ctx> CodeGen<'ctx> {
     let (var_name, num_i32) = self.fors_init_inner(&fors.init[0]).unwrap();
     let variable = self.builder.build_phi(i32_type, &var_name);
     variable.add_incoming(&[(&num_i32, basic_block_entry)]);
+    let phivalue_enum = values::AnyValueEnum::PhiValue(variable);
+    self.push_var(phivalue_enum, &var_name);
 
     self.builder.position_at_end(basic_block_loop);
     self.scope_write(&fors.node, basic_block_loop);
