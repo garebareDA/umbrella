@@ -6,6 +6,7 @@ pub enum Types {
   Binary(BinaryAST),
   Variable(VariableAST),
   Ifs(IfsAST),
+  Fors(ForsAST),
 }
 
 #[derive(Debug)]
@@ -106,6 +107,25 @@ impl IfsAST {
       ifs:Vec::new(),
       then:Vec::new(),
       elses:Vec::new(),
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct ForsAST{
+  pub init:Vec<Types>,
+  pub ifs:Vec<Types>,
+  pub count:Vec<Types>,
+  pub node: Vec<Types>,
+}
+
+impl ForsAST {
+  pub fn new() -> Self {
+    Self{
+      init:Vec::new(),
+      ifs:Vec::new(),
+      count:Vec::new(),
+      node:Vec::new(),
     }
   }
 }

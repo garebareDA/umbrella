@@ -86,7 +86,44 @@ impl Persers {
       }
 
       let value = self.get_tokens(self.index).get_value();
-      return Ok(ast::Types::Variable(ast::VariableAST::new(value)));
+      let variable_type = ast::Types::Variable(ast::VariableAST::new(value));
+      let check = self.check_calc(&variable_type);
+      match check {
+        Some(mut bin) => {
+          let inner = self.judge_calc();
+          match inner {
+            Some(t) => {
+              bin.node.push(t);
+            }
+
+            None => {}
+          }
+          return Ok(ast::Types::Binary(bin));
+        }
+
+        None => {
+          return Ok(variable_type);
+        }
+      }
+    }
+
+    if token == TOKEN._let {
+      self.index_add(1);
+      if self.get_tokens(self.index + 1).get_token() == TOKEN._equal {
+        let mut vars = ast::VariableAST::new(self.get_tokens(self.index).get_value());
+        self.index_add(2);
+        match self.judge() {
+          Ok(t) => {
+            vars.node.push(t);
+          }
+
+          Err(()) => {}
+        }
+
+        return Ok(ast::Types::Variable(vars));
+      } else {
+        //error
+      }
     }
 
     if token == TOKEN._number {
@@ -132,6 +169,10 @@ impl Persers {
             //error
           }
 
+          if self.tokens.len() <= self.index + 1 {
+            return Ok(ast::Types::Ifs(ifs));
+          }
+
           if self.get_tokens(self.index + 1).get_token() == TOKEN._else {
             self.index_add(2);
             if self.get_tokens(self.index).get_token() == TOKEN._braces_left {
@@ -149,6 +190,46 @@ impl Persers {
           //error
         }
       };
+    }
+
+    if token == TOKEN._for {
+      self.index_add(1);
+      let mut fors = ast::ForsAST::new();
+      match self.judge() {
+        Ok(t) => match t {
+          ast::Types::Variable(_) => {
+            fors.init.push(t);
+          }
+          _ => {}
+        },
+        Err(()) => {}
+      }
+      self.index_add(2);
+
+      match self.judge() {
+        Ok(t) => match t {
+          ast::Types::Binary(_) => {
+            fors.ifs.push(t);
+          }
+          _ => {}
+        },
+        Err(()) => {}
+      }
+      self.index_add(1);
+
+      match self.judge() {
+        Ok(t) => match t {
+          ast::Types::Binary(_) => {
+            fors.count.push(t);
+          }
+          _ => {}
+        },
+        Err(()) => {}
+      }
+      self.index_add(1);
+
+      fors.node = self.scope();
+      return Ok(ast::Types::Fors(fors));
     }
 
     return Err(());
@@ -307,6 +388,21 @@ mod tests {
     let result = parser.run();
     match result.node[0] {
       ast::Types::Ifs(_) => {}
+      _ => panic!("not"),
+    }
+  }
+
+  #[test]
+  fn fors() {
+    let lex_result = lexers::run(
+      "for let i = 0; i < 5; i++ {
+        print(\"hello\");
+      }",
+    );
+    let mut parser = parsers::Persers::new(lex_result);
+    let result = parser.run();
+    match result.node[0] {
+      ast::Types::Fors(_) => {}
       _ => panic!("not"),
     }
   }
