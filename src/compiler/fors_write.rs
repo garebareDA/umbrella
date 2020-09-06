@@ -11,16 +11,22 @@ impl<'ctx> CodeGen<'ctx> {
     let basic_block_preloop = self.context.append_basic_block(function, "preloop");
     let basic_block_loop = self.context.append_basic_block(function, "loop");
     let basic_block_afterloop = self.context.append_basic_block(function, "afterloop");
-
     self.builder.position_at_end(basic_block_entry);
     self.builder.build_unconditional_branch(basic_block_preloop);
-    self.builder.position_at_end(basic_block_preloop);
 
+    self.builder.position_at_end(basic_block_preloop);
     let (var_name, num_i32) = self.fors_init_inner(&fors.init[0]).unwrap();
     let variable = self.builder.build_phi(i32_type, &var_name);
     variable.add_incoming(&[(&num_i32, basic_block_entry)]);
     let phivalue_enum = values::AnyValueEnum::PhiValue(variable);
     self.push_var(phivalue_enum, &var_name);
+
+    let for_ifs = self.fors_ifs_init(&fors.ifs[0]);
+    let sum = self.calcuration(&for_ifs.unwrap());
+    sum.print_to_stderr();
+    self
+    .builder
+    .build_conditional_branch(sum, basic_block_loop, basic_block_afterloop);
 
     self.builder.position_at_end(basic_block_loop);
     self.scope_write(&fors.node, basic_block_loop);
@@ -48,6 +54,13 @@ impl<'ctx> CodeGen<'ctx> {
           _ => {Err(())}
         }
       }
+      _ => {Err(())}
+    }
+  }
+
+  fn fors_ifs_init(&self, ifs:&ast::Types) -> Result<ast::BinaryAST, ()> {
+    match ifs {
+      ast::Types::Binary(bin) => {return Ok(bin.clone());}
       _ => {Err(())}
     }
   }

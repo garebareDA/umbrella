@@ -15,8 +15,10 @@ entry:
 
 preloop:                                          ; preds = %loop, %entry
   %i = phi i32 [ 0, %entry ]
+  %lessthan = icmp slt i32 %i, 5
+  br i1 %lessthan, label %loop, label %afterloop
 
-loop:                                             ; No predecessors!
+loop:                                             ; preds = %preloop
   %putchar = call i32 @putchar(i32 104)
   %putchar1 = call i32 @putchar(i32 101)
   %putchar2 = call i32 @putchar(i32 108)
@@ -25,7 +27,7 @@ loop:                                             ; No predecessors!
   %putchar5 = call i32 @putchar(i32 10)
   br label %preloop
 
-afterloop:                                        ; No predecessors!
+afterloop:                                        ; preds = %preloop
   ret i32 0
 }
 

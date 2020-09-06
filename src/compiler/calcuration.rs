@@ -7,7 +7,7 @@ use super::super::parser::ast::Types;
 use super::compile::CodeGen;
 
 impl<'ctx> CodeGen<'ctx> {
-  pub fn calcuration(& self, bin: &ast::BinaryAST) -> values::IntValue {
+  pub fn calcuration(&self, bin: &ast::BinaryAST) -> values::IntValue {
     let mut op_stack: Vec<char> = Vec::new();
     let mut number_stack: Vec<values::AnyValueEnum> = Vec::new();
     let op = bin.op;
@@ -20,6 +20,15 @@ impl<'ctx> CodeGen<'ctx> {
         number_stack.push(values::AnyValueEnum::IntValue(int));
       }
 
+      Types::Variable(vars) => {
+        match self.vars_serch(&vars.name) {
+          Ok(var) => {
+            number_stack.push(var.clone());
+          }
+          Err(()) => {}
+        }
+      }
+
       _ => {
         //error
       }
@@ -30,10 +39,9 @@ impl<'ctx> CodeGen<'ctx> {
         let num_i32 = self.context.i32_type();
         let int = num_i32.const_int(num.num as u64, false);
         number_stack.push(values::AnyValueEnum::IntValue(int));
-        if bin.node.len() > 1 && !num.node.is_empty(){
+        if bin.node.len() > 1 && !num.node.is_empty() {
           self.calcuration_stack(&mut op_stack, &mut number_stack, &num.node[0]);
         }
-
       }
 
       _ => {
@@ -44,7 +52,7 @@ impl<'ctx> CodeGen<'ctx> {
     let mut cal_counter = 0;
     for (i, op) in op_stack.iter().enumerate() {
       if number_stack.len() == 1 {
-        break
+        break;
       }
       let l_index = i - cal_counter;
       let r_index = i - cal_counter + 1;
@@ -67,10 +75,11 @@ impl<'ctx> CodeGen<'ctx> {
       cal_counter += 1;
     }
 
+    println!("{:?}", op_stack);
     let mut cal_counter = 0;
     for (i, op) in op_stack.iter().enumerate() {
       if number_stack.len() == 1 {
-        break
+        break;
       }
       let l_index = i - cal_counter;
       let r_index = i - cal_counter + 1;
@@ -96,7 +105,7 @@ impl<'ctx> CodeGen<'ctx> {
     let mut cal_counter = 0;
     for (i, op) in op_stack.iter().enumerate() {
       if number_stack.len() == 1 {
-        break
+        break;
       }
       let l_index = i - cal_counter;
       let r_index = i - cal_counter + 1;
@@ -105,13 +114,21 @@ impl<'ctx> CodeGen<'ctx> {
       let r_stack = self.change_value(number_stack[r_index]).unwrap();
 
       if op == &'<' {
-        let sum = self.builder.build_int_compare(inkwell::IntPredicate::SLT, l_stack, r_stack, "lessthan");
+        let sum =
+          self
+            .builder
+            .build_int_compare(inkwell::IntPredicate::SLT, l_stack, r_stack, "lessthan");
         number_stack[l_index] = values::AnyValueEnum::IntValue(sum);
         number_stack.remove(r_index);
       }
 
       if op == &'>' {
-        let sum = self.builder.build_int_compare(inkwell::IntPredicate::SGT, l_stack, r_stack, "greaterthan");
+        let sum = self.builder.build_int_compare(
+          inkwell::IntPredicate::SGT,
+          l_stack,
+          r_stack,
+          "greaterthan",
+        );
         number_stack[l_index] = values::AnyValueEnum::IntValue(sum);
         number_stack.remove(r_index);
       }
@@ -145,30 +162,26 @@ impl<'ctx> CodeGen<'ctx> {
         }
       }
 
-      ast::Types::Variable(vars) => {
-        match self.vars_serch(&vars.name) {
-          Ok(var) => {
-
-            if !&vars.node.is_empty() {
-              self.calcuration_stack(op_stack, number_stack, &vars.node[0]);
-            }
+      ast::Types::Variable(vars) => match self.vars_serch(&vars.name) {
+        Ok(var) => {
+          number_stack.push(var.clone());
+          if !&vars.node.is_empty() {
+            self.calcuration_stack(op_stack, number_stack, &vars.node[0]);
           }
-
-          Err(()) => {}
         }
-      }
+
+        Err(()) => {}
+      },
       _ => {}
     }
   }
 
-  fn change_value(&self, value:values::AnyValueEnum<'ctx>) -> Result<values::IntValue<'ctx>, ()>{
+  fn change_value(&self, value: values::AnyValueEnum<'ctx>) -> Result<values::IntValue<'ctx>, ()> {
     match value {
-      values::AnyValueEnum::IntValue(int) => {Ok(int)}
-      values::AnyValueEnum::PhiValue(phi) => {
-        Ok(phi.as_basic_value().into_int_value())
-      }
+      values::AnyValueEnum::IntValue(int) => Ok(int),
+      values::AnyValueEnum::PhiValue(phi) => Ok(phi.as_basic_value().into_int_value()),
 
-      _ => {Err(())}
+      _ => Err(()),
     }
   }
 }

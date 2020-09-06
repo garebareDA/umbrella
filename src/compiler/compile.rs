@@ -84,6 +84,7 @@ impl<'ctx> CodeGen<'ctx> {
   }
 
   fn set_main_run(&mut self, node: &Vec<ast::Types>){
+    self.var_vec.push(Vec::new());
     let i32_type = self.context.i32_type();
     let main_type = i32_type.fn_type(&[], false);
     let function = self.module.add_function("main", main_type, None);
