@@ -34,6 +34,7 @@ pub fn jit_compile(ast: ast::RootAST) {
 
 impl<'ctx> CodeGen<'ctx> {
   pub fn judge(&mut self, types: &ast::Types, basic_block:inkwell::basic_block::BasicBlock) {
+    self.builder.position_at_end(basic_block);
     match types {
       ast::Types::Call(call) => {
         if call.callee == "print" && call.argument.len() < 2 {
@@ -53,6 +54,8 @@ impl<'ctx> CodeGen<'ctx> {
             _ => {}
           }
         }
+
+
       }
 
       ast::Types::Ifs(ifs) => {
@@ -83,6 +86,10 @@ impl<'ctx> CodeGen<'ctx> {
         let fors = self.module.get_function(&format!("{}.{}","fors", self.for_gen_stack));
         self.builder.build_call(fors.unwrap(), &[], "fors");
         self.for_gen_stack += 1;
+      }
+
+      ast::Types::Function(fun) => {
+        
       }
 
       _ => {}

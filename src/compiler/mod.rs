@@ -4,3 +4,4 @@ pub mod calcuration;
 pub mod ifs_write;
 pub mod fors_write;
 pub mod vars;
+pub mod functions;

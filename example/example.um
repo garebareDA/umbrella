@@ -1,3 +1,1 @@
-fn a(a:int, b:string){
-
-}
+print("hello");
