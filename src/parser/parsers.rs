@@ -86,7 +86,12 @@ impl Persers {
       }
 
       let value = self.get_tokens(self.index).get_value();
-      let variable_type = ast::Types::Variable(ast::VariableAST::new(value));
+      let mut variabel_ast = ast::VariableAST::new(value);
+      if self.tokens.len() > self.index + 1&& self.get_tokens(self.index + 1).get_token() == TOKEN._colon {
+        self.index_add(2);
+        variabel_ast.types = self.variable_type_get();
+      }
+      let variable_type = ast::Types::Variable(variabel_ast);
       let check = self.check_calc(&variable_type);
       match check {
         Some(mut bin) => {
@@ -108,19 +113,28 @@ impl Persers {
     }
 
     if token == TOKEN._let {
-      self.index_add(1);
-      if self.get_tokens(self.index + 1).get_token() == TOKEN._equal {
-        let mut vars = ast::VariableAST::new(self.get_tokens(self.index).get_value());
-        self.index_add(2);
-        match self.judge() {
-          Ok(t) => {
-            vars.node.push(t);
-          }
+      if self.get_tokens(self.index + 1).get_token() == TOKEN._equal
+        || self.get_tokens(self.index + 3).get_token() == TOKEN._equal
+      {
+        let vars = self.judge();
+        match vars {
+          Ok(var) => match var {
+            ast::Types::Variable(mut vars) => {
+              self.index_add(2);
+              match self.judge() {
+                Ok(t) => {
+                  vars.node.push(t);
+                }
 
+                Err(()) => {}
+              }
+              return Ok(ast::Types::Variable(vars));
+            }
+
+            _ => {}
+          },
           Err(()) => {}
         }
-
-        return Ok(ast::Types::Variable(vars));
       } else {
         //error
       }
@@ -233,11 +247,34 @@ impl Persers {
     }
 
     if token == TOKEN._fn {
+      //error処理する際にリファクタリング
       self.index_add(1);
       if TOKEN._variable == self.get_tokens(self.index).get_token() {
+        let mut function_ast = ast::FunctionAST::new(self.get_tokens(self.index).get_value());
         self.index_add(1);
         if TOKEN._paren_left == self.get_tokens(self.index).get_token() {
-          
+          loop {
+            self.index_add(1);
+            if self.get_tokens(self.index).get_token() == TOKEN._paren_right {
+              self.index_add(1);
+              break;
+            }
+
+            let param = self.judge();
+            match param {
+              Ok(t) => {
+                function_ast.param.push(t);
+              }
+              Err(()) => {}
+            }
+          }
+
+          if TOKEN._braces_left == self.get_tokens(self.index).get_token() {
+            self.index_add(1);
+            function_ast.node = self.scope();
+          }
+
+          return Ok(ast::Types::Function(function_ast));
         }
       }
     }
@@ -312,6 +349,24 @@ impl Persers {
       return Some(ast::Types::Number(ast_num));
     }
 
+    None
+  }
+
+  fn variable_type_get(&self) -> Option<ast::VariableType> {
+    if self.get_tokens(self.index).get_token() == TOKEN._variable {
+      let value = self.get_tokens(self.index).get_value();
+      if value == "int" {
+        return Some(ast::VariableType::Int);
+      }
+
+      if value == "string" {
+        return Some(ast::VariableType::Strings);
+      }
+
+      if value == "bool" {
+        return Some(ast::VariableType::Bool);
+      }
+    }
     None
   }
 
@@ -413,6 +468,19 @@ mod tests {
     let result = parser.run();
     match result.node[0] {
       ast::Types::Fors(_) => {}
+      _ => panic!("not"),
+    }
+  }
+
+  #[test]
+  fn function() {
+    let lex_result = lexers::run(
+      "fn a (a:int, b:string){}",
+    );
+    let mut parser = parsers::Persers::new(lex_result);
+    let result = parser.run();
+    match result.node[0] {
+      ast::Types::Function(_) => {}
       _ => panic!("not"),
     }
   }

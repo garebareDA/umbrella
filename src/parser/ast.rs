@@ -7,6 +7,7 @@ pub enum Types {
   Variable(VariableAST),
   Ifs(IfsAST),
   Fors(ForsAST),
+  Function(FunctionAST),
 }
 
 #[derive(Debug, Clone)]
@@ -139,6 +140,7 @@ impl ForsAST {
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct FunctionAST{
   pub name: String,
   pub param:Vec<Types>,
