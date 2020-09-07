@@ -232,6 +232,16 @@ impl Persers {
       return Ok(ast::Types::Fors(fors));
     }
 
+    if token == TOKEN._fn {
+      self.index_add(1);
+      if TOKEN._variable == self.get_tokens(self.index).get_token() {
+        self.index_add(1);
+        if TOKEN._paren_left == self.get_tokens(self.index).get_token() {
+          
+        }
+      }
+    }
+
     return Err(());
   }
 
@@ -305,7 +315,7 @@ impl Persers {
     None
   }
 
-  fn get_tokens(&mut self, num: usize) -> &lelex::tokens::Tokens {
+  fn get_tokens(&self, num: usize) -> &lelex::tokens::Tokens {
     return &self.tokens[num];
   }
 
