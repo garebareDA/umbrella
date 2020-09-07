@@ -10,6 +10,7 @@ pub fn run(word: &str) -> Vec<lelex::tokens::Tokens> {
   lex.push_reserved_word(TOKEN._if, "if").unwrap();
   lex.push_reserved_word(TOKEN._else, "else").unwrap();
   lex.push_reserved_word(TOKEN._for, "for").unwrap();
+  lex.push_reserved_word(TOKEN._fn, "fn").unwrap();
   lex.push_between_ward(TOKEN._string, "\"").unwrap();
   lex.set_other_token(TOKEN._variable).unwrap();
   lex.set_number_token(TOKEN._number).unwrap();
