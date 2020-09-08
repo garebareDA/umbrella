@@ -1,0 +1,5 @@
+fn a() {
+  print("hello world");
+}
+
+a();

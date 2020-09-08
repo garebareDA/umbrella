@@ -70,8 +70,6 @@ impl<'ctx> CodeGen<'ctx> {
       }
     }
 
-    println!("{:?}", number_stack);
-
     let mut cal_counter = 0;
     for (i, op) in op_stack.iter().enumerate() {
       if number_stack.len() == 1 {
@@ -195,15 +193,6 @@ impl<'ctx> CodeGen<'ctx> {
         Err(()) => {}
       },
       _ => {}
-    }
-  }
-
-  fn change_value(&self, value: values::AnyValueEnum<'ctx>) -> Result<values::IntValue<'ctx>, ()> {
-    match value {
-      values::AnyValueEnum::IntValue(int) => Ok(int),
-      values::AnyValueEnum::PhiValue(phi) => Ok(phi.as_basic_value().into_int_value()),
-
-      _ => Err(()),
     }
   }
 }

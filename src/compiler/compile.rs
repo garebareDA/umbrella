@@ -56,7 +56,6 @@ impl<'ctx> CodeGen<'ctx> {
             _ => {}
           }
         }
-
         self.call_write(call);
       }
 

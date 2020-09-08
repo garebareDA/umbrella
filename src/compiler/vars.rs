@@ -49,4 +49,13 @@ impl<'ctx> CodeGen<'ctx> {
 
     return Err(());
   }
+
+  pub fn change_value(&self, value: values::AnyValueEnum<'ctx>) -> Result<values::IntValue<'ctx>, ()> {
+    match value {
+      values::AnyValueEnum::IntValue(int) => Ok(int),
+      values::AnyValueEnum::PhiValue(phi) => Ok(phi.as_basic_value().into_int_value()),
+
+      _ => Err(()),
+    }
+  }
 }

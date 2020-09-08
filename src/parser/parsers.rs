@@ -71,23 +71,35 @@ impl Persers {
       if len > 1 && self.get_tokens(self.index + 1).get_token() == TOKEN._paren_left {
         let value = self.get_tokens(self.index).get_value();
         let mut callee = ast::CallAST::new(value);
-
         self.index_add(2);
 
-        let inner = self.judge();
-        match inner {
-          Ok(inner) => {
-            callee.argument.push(inner);
+        loop {
+          if self.get_tokens(self.index).get_token() == TOKEN._paren_right {
+            break;
           }
+          let inner = self.judge();
+          match inner {
+            Ok(inner) => {
+              callee.argument.push(inner);
+            }
 
-          Err(()) => {}
+            Err(()) => {}
+          }
+          self.index_add(1);
+          if self.get_tokens(self.index).get_token() == TOKEN._paren_right {
+            break;
+          }
+          self.index_add(1);
         }
+
         return Ok(ast::Types::Call(callee));
       }
 
       let value = self.get_tokens(self.index).get_value();
       let mut variabel_ast = ast::VariableAST::new(value);
-      if self.tokens.len() > self.index + 1&& self.get_tokens(self.index + 1).get_token() == TOKEN._colon {
+      if self.tokens.len() > self.index + 1
+        && self.get_tokens(self.index + 1).get_token() == TOKEN._colon
+      {
         self.index_add(2);
         variabel_ast.types = self.variable_type_get();
       }
@@ -474,13 +486,22 @@ mod tests {
 
   #[test]
   fn function() {
-    let lex_result = lexers::run(
-      "fn a (a:int, b:string){}",
-    );
+    let lex_result = lexers::run("fn a (a:int, b:string){}");
     let mut parser = parsers::Persers::new(lex_result);
     let result = parser.run();
     match result.node[0] {
       ast::Types::Function(_) => {}
+      _ => panic!("not"),
+    }
+  }
+
+  #[test]
+  fn print() {
+    let lex_result = lexers::run("print(\"a\")");
+    let mut parser = parsers::Persers::new(lex_result);
+    let result = parser.run();
+    match result.node[0] {
+      ast::Types::Call(_) => {}
       _ => panic!("not"),
     }
   }
