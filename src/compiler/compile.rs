@@ -56,6 +56,8 @@ impl<'ctx> CodeGen<'ctx> {
             _ => {}
           }
         }
+
+        self.call_write(call);
       }
 
       ast::Types::Ifs(ifs) => {
