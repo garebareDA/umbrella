@@ -108,7 +108,9 @@ impl<'ctx> CodeGen<'ctx> {
         self.push_fun(fun, &fun.name);
         self.push_var_vec();
         self.push_fun_vec();
-        
+        self.function_write(&fun);
+        self.push_var_vec_remove();
+        self.push_fun_vec_remove();
       }
 
       _ => {}
@@ -129,6 +131,7 @@ impl<'ctx> CodeGen<'ctx> {
 
   fn set_main_run(&mut self, node: &Vec<ast::Types>) {
     self.push_var_vec();
+    self.push_fun_vec();
     let i32_type = self.context.i32_type();
     let main_type = i32_type.fn_type(&[], false);
     let function = self.module.add_function("main", main_type, None);
