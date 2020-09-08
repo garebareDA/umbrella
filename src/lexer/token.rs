@@ -6,6 +6,7 @@ pub struct Token{
   pub _if: i64,
   pub _else: i64,
   pub _for: i64,
+  pub _fn: i64,
   pub _equal: i64,
   pub _greater: i64,
   pub _less: i64,
@@ -17,6 +18,7 @@ pub struct Token{
   pub _paren_right: i64,
   pub _braces_left:i64,
   pub _braces_right: i64,
+  pub _colon: i64,
   pub _end: i64,
 }
 
@@ -30,6 +32,7 @@ impl Token{
       _if: -5,
       _else:-6,
       _for:-7,
+      _fn: -8,
       _equal: 61,
       _greater:62,
       _less:60,
@@ -41,7 +44,8 @@ impl Token{
       _paren_left: 40,
       _paren_right:41,
       _braces_left:123,
-      _braces_right:125
+      _braces_right:125,
+      _colon:58,
     }
   }
 }

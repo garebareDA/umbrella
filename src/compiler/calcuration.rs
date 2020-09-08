@@ -70,6 +70,8 @@ impl<'ctx> CodeGen<'ctx> {
       }
     }
 
+    println!("{:?}", number_stack);
+
     let mut cal_counter = 0;
     for (i, op) in op_stack.iter().enumerate() {
       if number_stack.len() == 1 {

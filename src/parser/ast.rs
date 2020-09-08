@@ -7,6 +7,14 @@ pub enum Types {
   Variable(VariableAST),
   Ifs(IfsAST),
   Fors(ForsAST),
+  Function(FunctionAST),
+}
+
+#[derive(Debug, Clone)]
+pub enum VariableType {
+  Strings,
+  Int,
+  Bool,
 }
 
 #[derive(Debug)]
@@ -82,6 +90,7 @@ impl BinaryAST {
 #[derive(Debug, Clone)]
 pub struct VariableAST{
   pub name:String,
+  pub types:Option<VariableType>,
   pub node: Vec<Types>
 }
 
@@ -89,6 +98,7 @@ impl VariableAST{
   pub fn new(name:&str) -> Self {
     VariableAST{
       name:name.to_string(),
+      types:None,
       node:Vec::new()
     }
   }
@@ -125,6 +135,23 @@ impl ForsAST {
       init:Vec::new(),
       ifs:Vec::new(),
       count:Vec::new(),
+      node:Vec::new(),
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct FunctionAST{
+  pub name: String,
+  pub param:Vec<Types>,
+  pub node: Vec<Types>,
+}
+
+impl FunctionAST {
+  pub fn new(name: &str) -> Self {
+    Self {
+      name: name.to_string(),
+      param:Vec::new(),
       node:Vec::new(),
     }
   }
