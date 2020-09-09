@@ -54,17 +54,15 @@ impl<'ctx> CodeGen<'ctx> {
               self.print_string(&sum.print_to_string().to_string());
             }
 
-            ast::Types::Variable(var) => {
-              match self.vars_serch(&var.name) {
-                Ok(var) => match self.change_value(&var) {
-                  Ok(inner) => {
-                    self.print_string(&inner.print_to_string().to_string());
-                  }
-                  Err(()) => {}
+            ast::Types::Variable(var) => match self.vars_serch(&var.name) {
+              Ok(var) => match self.change_value(&var) {
+                Ok(inner) => {
+                  self.print_string(&inner.print_to_string().to_string());
                 }
                 Err(()) => {}
-              }
-            }
+              },
+              Err(()) => {}
+            },
             _ => {}
           }
         }
@@ -117,17 +115,8 @@ impl<'ctx> CodeGen<'ctx> {
         self.push_fun_vec_remove();
       }
 
-      ast::Types::Function(fun) => {
-        self.push_fun(fun, &fun.name);
-        self.push_var_vec();
-        self.push_fun_vec();
-        self.function_write(&fun);
-        self.push_var_vec_remove();
-        self.push_fun_vec_remove();
-      }
-
       ast::Types::Variable(var) => {
-        if !var.node.is_empty(){
+        if !var.node.is_empty() {
           self.var_write(&var.name, &var.node[0]);
         }
       }
@@ -148,6 +137,27 @@ impl<'ctx> CodeGen<'ctx> {
     }
   }
 
+  fn start_function_write(
+    &mut self,
+    node: &Vec<ast::Types>,
+    basic_block: inkwell::basic_block::BasicBlock,
+  ) {
+    for ast in node.iter() {
+      self.builder.position_at_end(basic_block);
+      match ast {
+        ast::Types::Function(fun) => {
+          self.push_fun(fun, &fun.name);
+          self.push_var_vec();
+          self.push_fun_vec();
+          self.function_write(&fun);
+          self.push_var_vec_remove();
+          self.push_fun_vec_remove();
+        }
+        _ => {}
+      }
+    }
+  }
+
   fn set_main_run(&mut self, node: &Vec<ast::Types>) {
     self.push_var_vec();
     self.push_fun_vec();
@@ -155,6 +165,7 @@ impl<'ctx> CodeGen<'ctx> {
     let main_type = i32_type.fn_type(&[], false);
     let function = self.module.add_function("main", main_type, None);
     let basic_block = self.context.append_basic_block(function, "entry");
+    self.start_function_write(node, basic_block);
     self.scope_write(node, basic_block);
     self.builder.position_at_end(basic_block);
   }
