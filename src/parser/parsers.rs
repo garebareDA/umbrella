@@ -81,6 +81,9 @@ impl Persers {
           match inner {
             Ok(inner) => {
               callee.argument.push(inner);
+              if self.get_tokens(self.index).get_token() == TOKEN._paren_right {
+                break;
+              }
             }
 
             Err(()) => {}
