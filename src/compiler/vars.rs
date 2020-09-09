@@ -1,6 +1,8 @@
 use super::compile::CodeGen;
+use super::super::parser::ast;
 use inkwell::values;
 
+#[derive(Debug)]
 pub struct Var<'ctx> {
   name: String,
   value: values::AnyValueEnum<'ctx>,
@@ -24,6 +26,23 @@ impl<'ctx> Var<'ctx> {
 }
 
 impl<'ctx> CodeGen<'ctx> {
+  pub fn var_write(&mut self, name: &str, value: &ast::Types) {
+    match value {
+      ast::Types::Number(num) => {
+        let i32_type = self.context.i32_type();
+        let const_int = i32_type.const_int(num.num as u64, false);
+        self.push_var(values::AnyValueEnum::IntValue(const_int), name);
+      }
+      ast::Types::Binary(bin) => {
+        let sum = self.calcuration(bin);
+        self.push_var(values::AnyValueEnum::IntValue(sum), name);
+      }
+      ast::Types::Strings(strings) => {}
+      ast::Types::Function(fun) => {}
+      _ => {}
+    }
+  }
+
   pub fn push_var_vec(&mut self) {
     self.var_vec.push(Vec::new());
   }
@@ -50,9 +69,9 @@ impl<'ctx> CodeGen<'ctx> {
     return Err(());
   }
 
-  pub fn change_value(&self, value: values::AnyValueEnum<'ctx>) -> Result<values::IntValue<'ctx>, ()> {
+  pub fn change_value(&self, value: &values::AnyValueEnum<'ctx>) -> Result<values::IntValue<'ctx>, ()> {
     match value {
-      values::AnyValueEnum::IntValue(int) => Ok(int),
+      values::AnyValueEnum::IntValue(int) => Ok(int.clone()),
       values::AnyValueEnum::PhiValue(phi) => Ok(phi.as_basic_value().into_int_value()),
 
       _ => Err(()),

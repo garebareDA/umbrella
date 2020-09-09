@@ -28,7 +28,7 @@ impl<'ctx> CodeGen<'ctx> {
       match argument {
         ast::Types::Variable(var) => {
           match self.vars_serch(&var.name) {
-            Ok(var) => match self.change_value(var.clone()) {
+            Ok(var) => match self.change_value(&var) {
               Ok(value) => {
                 argument_vec.push(value.into());
               }

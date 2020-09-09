@@ -125,9 +125,15 @@ impl Persers {
     }
 
     if token == TOKEN._let {
-      if self.get_tokens(self.index + 1).get_token() == TOKEN._equal
-        || self.get_tokens(self.index + 3).get_token() == TOKEN._equal
-      {
+      let none_type = self.get_tokens(self.index + 2).get_token() == TOKEN._equal;
+      let ok_type = self.get_tokens(self.index + 3).get_token() == TOKEN._equal;
+      if none_type || ok_type {
+        if none_type {
+          self.index_add(1);
+        } else if ok_type {
+          self.index_add(2);
+        }
+
         let vars = self.judge();
         match vars {
           Ok(var) => match var {

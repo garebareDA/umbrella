@@ -7,7 +7,7 @@ use super::super::parser::ast::Types;
 use super::compile::CodeGen;
 
 impl<'ctx> CodeGen<'ctx> {
-  pub fn calcuration(&self, bin: &ast::BinaryAST) -> values::IntValue {
+  pub fn calcuration(&self, bin: &ast::BinaryAST) -> values::IntValue<'ctx> {
     let mut op_stack: Vec<char> = Vec::new();
     let mut number_stack: Vec<values::AnyValueEnum> = Vec::new();
     let op = bin.op;
@@ -56,14 +56,14 @@ impl<'ctx> CodeGen<'ctx> {
     if op_stack.len() == 2 && number_stack.len() == 1 {
       let num_i32 = self.context.i32_type();
       if op_stack[0] == '+' && op_stack[1] == '+' {
-        let l_stack = self.change_value(number_stack[0]).unwrap();
+        let l_stack = self.change_value(&number_stack[0]).unwrap();
         let r_stack = num_i32.const_int(1 as u64, false);
         let sum = self.builder.build_int_add(l_stack, r_stack, "sum");
         return sum;
       }
 
       if op_stack[0] == '-' && op_stack[1] == '-' {
-        let l_stack = self.change_value(number_stack[0]).unwrap();
+        let l_stack = self.change_value(&number_stack[0]).unwrap();
         let r_stack = num_i32.const_int(1 as u64, false);
         let sum = self.builder.build_int_sub(l_stack, r_stack, "sub");
         return sum;
@@ -78,8 +78,8 @@ impl<'ctx> CodeGen<'ctx> {
       let l_index = i - cal_counter;
       let r_index = i - cal_counter + 1;
 
-      let l_stack = self.change_value(number_stack[l_index]).unwrap();
-      let r_stack = self.change_value(number_stack[r_index]).unwrap();
+      let l_stack = self.change_value(&number_stack[l_index]).unwrap();
+      let r_stack = self.change_value(&number_stack[r_index]).unwrap();
 
       if op == &'/' {
         let sum = self.builder.build_int_unsigned_div(l_stack, r_stack, "div");
@@ -104,8 +104,8 @@ impl<'ctx> CodeGen<'ctx> {
       let l_index = i - cal_counter;
       let r_index = i - cal_counter + 1;
 
-      let l_stack = self.change_value(number_stack[l_index]).unwrap();
-      let r_stack = self.change_value(number_stack[r_index]).unwrap();
+      let l_stack = self.change_value(&number_stack[l_index]).unwrap();
+      let r_stack = self.change_value(&number_stack[r_index]).unwrap();
 
       if op == &'+' {
         let sum = self.builder.build_int_add(l_stack, r_stack, "sum");
@@ -130,8 +130,8 @@ impl<'ctx> CodeGen<'ctx> {
       let l_index = i - cal_counter;
       let r_index = i - cal_counter + 1;
 
-      let l_stack = self.change_value(number_stack[l_index]).unwrap();
-      let r_stack = self.change_value(number_stack[r_index]).unwrap();
+      let l_stack = self.change_value(&number_stack[l_index]).unwrap();
+      let r_stack = self.change_value(&number_stack[r_index]).unwrap();
 
       if op == &'<' {
         let sum =
@@ -156,7 +156,7 @@ impl<'ctx> CodeGen<'ctx> {
       cal_counter += 1;
     }
 
-    return self.change_value(number_stack[0]).unwrap();
+    return self.change_value(&number_stack[0]).unwrap();
   }
 
   fn calcuration_stack(

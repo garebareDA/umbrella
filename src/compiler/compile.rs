@@ -53,6 +53,18 @@ impl<'ctx> CodeGen<'ctx> {
               let sum = self.calcuration(bin);
               self.print_string(&sum.print_to_string().to_string());
             }
+
+            ast::Types::Variable(var) => {
+              match self.vars_serch(&var.name) {
+                Ok(var) => match self.change_value(&var) {
+                  Ok(inner) => {
+                    self.print_string(&inner.print_to_string().to_string());
+                  }
+                  Err(()) => {}
+                }
+                Err(()) => {}
+              }
+            }
             _ => {}
           }
         }
@@ -112,6 +124,12 @@ impl<'ctx> CodeGen<'ctx> {
         self.function_write(&fun);
         self.push_var_vec_remove();
         self.push_fun_vec_remove();
+      }
+
+      ast::Types::Variable(var) => {
+        if !var.node.is_empty(){
+          self.var_write(&var.name, &var.node[0]);
+        }
       }
 
       _ => {}
