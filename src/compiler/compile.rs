@@ -6,6 +6,7 @@ use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::Module;
 use inkwell::AddressSpace;
+use inkwell::values;
 
 pub struct CodeGen<'ctx> {
   pub context: &'ctx Context,
@@ -53,7 +54,7 @@ impl<'ctx> CodeGen<'ctx> {
 
             ast::Types::Binary(bin) => {
               let sum = self.calcuration(bin);
-              self.print_string(&sum.print_to_string().to_string());
+              self.print_number(values::BasicValueEnum::IntValue(sum));
             }
 
             ast::Types::Variable(var) => match self.vars_serch(&var.name) {
