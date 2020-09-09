@@ -5,6 +5,7 @@ use super::vars::Var;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::Module;
+use inkwell::AddressSpace;
 
 pub struct CodeGen<'ctx> {
   pub context: &'ctx Context,
@@ -31,6 +32,7 @@ pub fn jit_compile(ast: ast::RootAST) {
     for_gen_stack: 0,
   };
   code_gen.add_fun_print();
+  code_gen.add_fun_printf();
   code_gen.set_main_run(&ast.node);
   code_gen.set_return();
 }
@@ -174,6 +176,13 @@ impl<'ctx> CodeGen<'ctx> {
     let i32_type = self.context.i32_type();
     let putchar_type = i32_type.fn_type(&[i32_type.into()], false);
     self.module.add_function("putchar", putchar_type, None);
+  }
+
+  pub fn add_fun_printf(&mut self) {
+    let i32_type = self.context.i32_type();
+    let i8_type = self.context.i8_type();
+    let printf_type = i32_type.fn_type(&[i8_type.ptr_type(AddressSpace::Generic).into()], true);
+    self.module.add_function("printf", printf_type, None);
   }
 
   fn set_return(&mut self) {

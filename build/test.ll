@@ -3,6 +3,8 @@ source_filename = "main"
 
 declare i32 @putchar(i32)
 
+declare i32 @printf(i8*, ...)
+
 define i32 @main() {
 entry:
   %putchar = call i32 @putchar(i32 105)
