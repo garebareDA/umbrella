@@ -49,7 +49,9 @@ impl<'ctx> CodeGen<'ctx> {
             }
 
             ast::Types::Number(num) => {
-              self.print_string(&num.num.to_string());
+              let i32_type = self.context.i32_type();
+              let i32_const = i32_type.const_int(num.num as u64, false);
+              self.print_number(values::BasicValueEnum::IntValue(i32_const));
             }
 
             ast::Types::Binary(bin) => {
@@ -60,7 +62,7 @@ impl<'ctx> CodeGen<'ctx> {
             ast::Types::Variable(var) => match self.vars_serch(&var.name) {
               Ok(var) => match self.change_value(&var) {
                 Ok(inner) => {
-                  self.print_string(&inner.print_to_string().to_string());
+                  self.print_number(values::BasicValueEnum::IntValue(inner));
                 }
                 Err(()) => {}
               },

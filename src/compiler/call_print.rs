@@ -17,7 +17,7 @@ impl<'ctx> CodeGen<'ctx> {
   }
 
   pub fn print_number(&self, num:values::BasicValueEnum) {
-    let format = self.builder.build_global_string_ptr("%f\n", "format");
+    let format = self.builder.build_global_string_ptr("%d\n", "format");
     let printf = self.module.get_function("printf");
     self.builder.build_call(printf.unwrap(),&[values::BasicValueEnum::PointerValue(format.as_pointer_value()), num], "printf");
   }
