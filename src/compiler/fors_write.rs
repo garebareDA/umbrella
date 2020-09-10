@@ -1,6 +1,5 @@
 use super::super::parser::ast;
 use super::compile::CodeGen;
-use inkwell::values;
 
 impl<'ctx> CodeGen<'ctx> {
   pub fn for_write(&mut self, fors: &ast::ForsAST) {

@@ -72,7 +72,7 @@ impl<'ctx> CodeGen<'ctx> {
             _ => {}
           }
         }
-        self.call_write(call);
+        self.call_write(call).unwrap();
       }
 
       ast::Types::Ifs(ifs) => {
