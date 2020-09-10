@@ -6,3 +6,4 @@ pub mod fors_write;
 pub mod vars;
 pub mod functions;
 pub mod call;
+pub mod returns;

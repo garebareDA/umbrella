@@ -5,8 +5,8 @@ use super::vars::Var;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::Module;
-use inkwell::AddressSpace;
 use inkwell::values;
+use inkwell::AddressSpace;
 
 pub struct CodeGen<'ctx> {
   pub context: &'ctx Context,
@@ -32,7 +32,6 @@ pub fn jit_compile(ast: ast::RootAST) {
     if_gen_stack: 0,
     for_gen_stack: 0,
   };
-  code_gen.add_fun_print();
   code_gen.add_fun_printf();
   code_gen.set_main_run(&ast.node);
   code_gen.set_return();
@@ -45,8 +44,12 @@ impl<'ctx> CodeGen<'ctx> {
         if call.callee == "print" && call.argument.len() < 2 {
           match &call.argument[0] {
             ast::Types::Strings(strings) => {
-              let format = self.builder.build_global_string_ptr(&format!("{}\n", strings.strings), "strings");
-              self.print(values::BasicValueEnum::PointerValue(format.as_pointer_value()));
+              let format = self
+                .builder
+                .build_global_string_ptr(&format!("{}\n", strings.strings), "strings");
+              self.print(values::BasicValueEnum::PointerValue(
+                format.as_pointer_value(),
+              ));
             }
 
             ast::Types::Number(num) => {
@@ -127,8 +130,12 @@ impl<'ctx> CodeGen<'ctx> {
         }
       }
 
-      _ => {}
-    }
+      ast::Types::Return(ret) => {
+        self.return_write(&ret.node[0]);
+      }
+
+    _ => {}
+  }
   }
 
   pub fn scope_write(
@@ -174,12 +181,6 @@ impl<'ctx> CodeGen<'ctx> {
     self.start_function_write(node, basic_block);
     self.scope_write(node, basic_block);
     self.builder.position_at_end(basic_block);
-  }
-
-  pub fn add_fun_print(&mut self) {
-    let i32_type = self.context.i32_type();
-    let putchar_type = i32_type.fn_type(&[i32_type.into()], false);
-    self.module.add_function("putchar", putchar_type, None);
   }
 
   pub fn add_fun_printf(&mut self) {

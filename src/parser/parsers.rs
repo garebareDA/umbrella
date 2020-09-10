@@ -293,6 +293,7 @@ impl Persers {
           if self.get_tokens(self.index).get_token() != TOKEN._braces_left {
             let types = self.variable_type_get();
             function_ast.returns = types;
+            self.index_add(1);
           }
 
           if self.get_tokens(self.index).get_token() == TOKEN._braces_left {
