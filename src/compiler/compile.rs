@@ -64,11 +64,8 @@ impl<'ctx> CodeGen<'ctx> {
             }
 
             ast::Types::Variable(var) => match self.vars_serch(&var.name) {
-              Ok(var) => match self.change_value(&var) {
-                Ok(inner) => {
-                  self.print(inner);
-                }
-                Err(()) => {}
+              Ok(var) => {
+                self.print(*var);
               },
               Err(()) => {}
             },
@@ -143,7 +140,6 @@ impl<'ctx> CodeGen<'ctx> {
     node: &Vec<ast::Types>,
     basic_block: inkwell::basic_block::BasicBlock,
   ) {
-    self.push_var_vec();
     for ast in node.iter() {
       self.builder.position_at_end(basic_block);
       self.judge(ast, basic_block);

@@ -4,37 +4,33 @@ use super::compile::CodeGen;
 use inkwell::values;
 
 impl<'ctx> CodeGen<'ctx> {
-  pub fn call_write(&self, call: &ast::CallAST) {
+  pub fn call_write(&self, call: &ast::CallAST) -> Result<values::CallSiteValue<'ctx>, ()> {
     let function = self.module.get_function(&call.callee);
     match function {
       Some(func) => {
         let argument = self.argument_get(&call.argument);
-        self.builder.build_call(
+        let returns = self.builder.build_call(
           func,
           &argument,
           "return",
         );
+        return Ok(returns);
       }
       None => {
-
+        return Err(());
       }
     }
   }
 
-  fn argument_get(&self, arguments: &Vec<ast::Types>) ->  Vec<values::BasicValueEnum>{
+  fn argument_get(&self, arguments: &Vec<ast::Types>) ->  Vec<values::BasicValueEnum<'ctx>>{
     let i32_type = self.context.i32_type();
     let mut argument_vec: Vec<values::BasicValueEnum> = Vec::new();
     for argument in arguments.iter() {
       match argument {
         ast::Types::Variable(var) => {
           match self.vars_serch(&var.name) {
-            Ok(var) => match self.change_value(&var) {
-              Ok(value) => {
-                argument_vec.push(value.into());
-              }
-              Err(()) => {
-                //error
-              }
+            Ok(var) => {
+              argument_vec.push(*var);
             },
             Err(()) => {
               //error

@@ -1,6 +1,7 @@
+use super::super::parser::ast;
 use super::compile::CodeGen;
 
-use super::super::parser::ast;
+use inkwell::values;
 
 impl<'ctx> CodeGen<'ctx> {
   pub fn return_write(&self, node: &ast::Types) {
@@ -22,11 +23,14 @@ impl<'ctx> CodeGen<'ctx> {
         self.builder.build_return(Some(&sum));
       }
       ast::Types::Variable(var) => match self.vars_serch(&var.name) {
-        Ok(t) => match self.change_value(&t) {
-          Ok(value) => {
-            self.builder.build_return(Some(&value));
+        Ok(t) => match t {
+          values::BasicValueEnum::IntValue(int) => {
+            self.builder.build_return(Some(int));
           }
-          Err(()) => {}
+          values::BasicValueEnum::PointerValue(point) => {
+            self.builder.build_return(Some(point));
+          }
+          _ => {}
         },
         Err(()) => {}
       },

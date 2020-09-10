@@ -1,6 +1,10 @@
 let a = 1;
-let d = b(a);
-print(d);
+let b = b(a);
+print(b + 1);
+
+for let i = 1; i < 5; i++ {
+  print("hello");
+}
 
 fn b(a:int) int {
   print(a + 1);

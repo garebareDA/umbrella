@@ -35,7 +35,7 @@ impl<'ctx> CodeGen<'ctx> {
     let function_param = function.get_params();
     for (index, param) in function_param.iter().enumerate() {
       let name = &name_vec[index];
-      let value = values::AnyValueEnum::IntValue(param.into_int_value());
+      let value = values::BasicValueEnum::IntValue(param.into_int_value());
       self.push_var(value, name);
     }
     self.scope_write(&funs.node, basic_block);
@@ -113,7 +113,7 @@ impl<'ctx> CodeGen<'ctx> {
   }
 
   pub fn push_fun_vec_remove(&mut self) {
-    self.function_vec.remove(0);
+    self.function_vec.remove(self.function_vec.len() - 1);
   }
 
   pub fn push_fun(&mut self, value: &ast::FunctionAST, name: &str) {
