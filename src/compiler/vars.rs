@@ -1,5 +1,5 @@
-use super::compile::CodeGen;
 use super::super::parser::ast;
+use super::compile::CodeGen;
 use inkwell::values;
 
 #[derive(Debug)]
@@ -37,7 +37,15 @@ impl<'ctx> CodeGen<'ctx> {
         let sum = self.calcuration(bin);
         self.push_var(values::AnyValueEnum::IntValue(sum), name);
       }
-      ast::Types::Strings(strings) => {}
+      ast::Types::Strings(strings) => {
+        let format = self
+          .builder
+          .build_global_string_ptr(&format!("{}\n", strings.strings), "strings");
+        self.push_var(
+          values::AnyValueEnum::PointerValue(format.as_pointer_value()),
+          name,
+        );
+      }
       ast::Types::Function(fun) => {}
       _ => {}
     }
@@ -69,11 +77,16 @@ impl<'ctx> CodeGen<'ctx> {
     return Err(());
   }
 
-  pub fn change_value(&self, value: &values::AnyValueEnum<'ctx>) -> Result<values::IntValue<'ctx>, ()> {
+  pub fn change_value(
+    &self,
+    value: &values::AnyValueEnum<'ctx>,
+  ) -> Result<values::BasicValueEnum<'ctx>, ()> {
     match value {
-      values::AnyValueEnum::IntValue(int) => Ok(int.clone()),
-      values::AnyValueEnum::PhiValue(phi) => Ok(phi.as_basic_value().into_int_value()),
-
+      values::AnyValueEnum::IntValue(int) => Ok(values::BasicValueEnum::IntValue(int.clone())),
+      values::AnyValueEnum::PhiValue(phi) => Ok(values::BasicValueEnum::IntValue(
+        phi.as_basic_value().into_int_value(),
+      )),
+      values::AnyValueEnum::PointerValue(pointer) => Ok(values::BasicValueEnum::PointerValue(pointer.clone())),
       _ => Err(()),
     }
   }

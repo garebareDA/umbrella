@@ -45,24 +45,25 @@ impl<'ctx> CodeGen<'ctx> {
         if call.callee == "print" && call.argument.len() < 2 {
           match &call.argument[0] {
             ast::Types::Strings(strings) => {
-              self.print_string(&strings.strings);
+              let format = self.builder.build_global_string_ptr(&format!("{}\n", strings.strings), "strings");
+              self.print(values::BasicValueEnum::PointerValue(format.as_pointer_value()));
             }
 
             ast::Types::Number(num) => {
               let i32_type = self.context.i32_type();
               let i32_const = i32_type.const_int(num.num as u64, false);
-              self.print_number(values::BasicValueEnum::IntValue(i32_const));
+              self.print(values::BasicValueEnum::IntValue(i32_const));
             }
 
             ast::Types::Binary(bin) => {
               let sum = self.calcuration(bin);
-              self.print_number(values::BasicValueEnum::IntValue(sum));
+              self.print(values::BasicValueEnum::IntValue(sum));
             }
 
             ast::Types::Variable(var) => match self.vars_serch(&var.name) {
               Ok(var) => match self.change_value(&var) {
                 Ok(inner) => {
-                  self.print_number(values::BasicValueEnum::IntValue(inner));
+                  self.print(inner);
                 }
                 Err(()) => {}
               },

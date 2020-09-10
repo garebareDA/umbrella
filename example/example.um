@@ -1,7 +1,10 @@
 let a = 1;
 let b = a + 1;
+let c = "test";
+print(c);
 print(b);
 b(a);
+print("hello");
 
 fn b(a:int) {
   print(a + 1);
