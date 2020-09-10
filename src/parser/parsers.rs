@@ -273,7 +273,7 @@ impl Persers {
       if TOKEN._variable == self.get_tokens(self.index).get_token() {
         let mut function_ast = ast::FunctionAST::new(self.get_tokens(self.index).get_value());
         self.index_add(1);
-        if TOKEN._paren_left == self.get_tokens(self.index).get_token() {
+        if self.get_tokens(self.index).get_token() == TOKEN._paren_left {
           loop {
             self.index_add(1);
             if self.get_tokens(self.index).get_token() == TOKEN._paren_right {
@@ -290,13 +290,35 @@ impl Persers {
             }
           }
 
-          if TOKEN._braces_left == self.get_tokens(self.index).get_token() {
+          if self.get_tokens(self.index).get_token() != TOKEN._braces_left {
+            let types = self.variable_type_get();
+            function_ast.returns = types;
+          }
+
+          if self.get_tokens(self.index).get_token() == TOKEN._braces_left {
             self.index_add(1);
             function_ast.node = self.scope();
           }
 
           return Ok(ast::Types::Function(function_ast));
         }
+      }
+    }
+
+    if token == TOKEN._return {
+      self.index_add(1);
+      match self.judge() {
+        Ok(t) => match t {
+          ast::Types::Ifs(_) => {}
+          ast::Types::Fors(_) => {}
+          ast::Types::Function(_) => {}
+          _ => {
+            let mut returns_ast = ast::ReturnAST::new();
+            returns_ast.node.push(t);
+            return Ok(ast::Types::Return(returns_ast));
+          }
+        },
+        Err(()) => {}
       }
     }
 
