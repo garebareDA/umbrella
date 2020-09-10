@@ -71,23 +71,38 @@ impl Persers {
       if len > 1 && self.get_tokens(self.index + 1).get_token() == TOKEN._paren_left {
         let value = self.get_tokens(self.index).get_value();
         let mut callee = ast::CallAST::new(value);
-
         self.index_add(2);
 
-        let inner = self.judge();
-        match inner {
-          Ok(inner) => {
-            callee.argument.push(inner);
+        loop {
+          if self.get_tokens(self.index).get_token() == TOKEN._paren_right {
+            break;
           }
+          let inner = self.judge();
+          match inner {
+            Ok(inner) => {
+              callee.argument.push(inner);
+              if self.get_tokens(self.index).get_token() == TOKEN._paren_right {
+                break;
+              }
+            }
 
-          Err(()) => {}
+            Err(()) => {}
+          }
+          self.index_add(1);
+          if self.get_tokens(self.index).get_token() == TOKEN._paren_right {
+            break;
+          }
+          self.index_add(1);
         }
+
         return Ok(ast::Types::Call(callee));
       }
 
       let value = self.get_tokens(self.index).get_value();
       let mut variabel_ast = ast::VariableAST::new(value);
-      if self.tokens.len() > self.index + 1&& self.get_tokens(self.index + 1).get_token() == TOKEN._colon {
+      if self.tokens.len() > self.index + 1
+        && self.get_tokens(self.index + 1).get_token() == TOKEN._colon
+      {
         self.index_add(2);
         variabel_ast.types = self.variable_type_get();
       }
@@ -113,9 +128,10 @@ impl Persers {
     }
 
     if token == TOKEN._let {
-      if self.get_tokens(self.index + 1).get_token() == TOKEN._equal
-        || self.get_tokens(self.index + 3).get_token() == TOKEN._equal
-      {
+      let none_type = self.get_tokens(self.index + 2).get_token() == TOKEN._equal;
+      let ok_type = self.get_tokens(self.index + 3).get_token() == TOKEN._equal;
+      if none_type || ok_type {
+        self.index_add(1);
         let vars = self.judge();
         match vars {
           Ok(var) => match var {
@@ -252,7 +268,7 @@ impl Persers {
       if TOKEN._variable == self.get_tokens(self.index).get_token() {
         let mut function_ast = ast::FunctionAST::new(self.get_tokens(self.index).get_value());
         self.index_add(1);
-        if TOKEN._paren_left == self.get_tokens(self.index).get_token() {
+        if self.get_tokens(self.index).get_token() == TOKEN._paren_left {
           loop {
             self.index_add(1);
             if self.get_tokens(self.index).get_token() == TOKEN._paren_right {
@@ -269,13 +285,36 @@ impl Persers {
             }
           }
 
-          if TOKEN._braces_left == self.get_tokens(self.index).get_token() {
+          if self.get_tokens(self.index).get_token() != TOKEN._braces_left {
+            let types = self.variable_type_get();
+            function_ast.returns = types;
+            self.index_add(1);
+          }
+
+          if self.get_tokens(self.index).get_token() == TOKEN._braces_left {
             self.index_add(1);
             function_ast.node = self.scope();
           }
 
           return Ok(ast::Types::Function(function_ast));
         }
+      }
+    }
+
+    if token == TOKEN._return {
+      self.index_add(1);
+      match self.judge() {
+        Ok(t) => match t {
+          ast::Types::Ifs(_) => {}
+          ast::Types::Fors(_) => {}
+          ast::Types::Function(_) => {}
+          _ => {
+            let mut returns_ast = ast::ReturnAST::new();
+            returns_ast.node.push(t);
+            return Ok(ast::Types::Return(returns_ast));
+          }
+        },
+        Err(()) => {}
       }
     }
 
@@ -474,13 +513,22 @@ mod tests {
 
   #[test]
   fn function() {
-    let lex_result = lexers::run(
-      "fn a (a:int, b:string){}",
-    );
+    let lex_result = lexers::run("fn a (a:int, b:string){}");
     let mut parser = parsers::Persers::new(lex_result);
     let result = parser.run();
     match result.node[0] {
       ast::Types::Function(_) => {}
+      _ => panic!("not"),
+    }
+  }
+
+  #[test]
+  fn print() {
+    let lex_result = lexers::run("print(\"a\")");
+    let mut parser = parsers::Persers::new(lex_result);
+    let result = parser.run();
+    match result.node[0] {
+      ast::Types::Call(_) => {}
       _ => panic!("not"),
     }
   }

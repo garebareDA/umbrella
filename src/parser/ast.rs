@@ -7,6 +7,7 @@ pub enum Types {
   Variable(VariableAST),
   Ifs(IfsAST),
   Fors(ForsAST),
+  Return(ReturnAST),
   Function(FunctionAST),
 }
 
@@ -141,9 +142,23 @@ impl ForsAST {
 }
 
 #[derive(Debug, Clone)]
+pub struct ReturnAST {
+  pub node: Vec<Types>,
+}
+
+impl ReturnAST {
+  pub fn new() -> Self {
+    Self {
+      node: Vec::new()
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
 pub struct FunctionAST{
   pub name: String,
   pub param:Vec<Types>,
+  pub returns:Option<VariableType>,
   pub node: Vec<Types>,
 }
 
@@ -151,6 +166,7 @@ impl FunctionAST {
   pub fn new(name: &str) -> Self {
     Self {
       name: name.to_string(),
+      returns:None,
       param:Vec::new(),
       node:Vec::new(),
     }
