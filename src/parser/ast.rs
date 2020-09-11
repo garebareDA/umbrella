@@ -75,14 +75,14 @@ impl NumberAST {
 
 #[derive(Debug, Clone)]
 pub struct BinaryAST {
-  pub op: char,
+  pub op: String,
   pub node: Vec<Types>,
 }
 
 impl BinaryAST {
-  pub fn new(op:char) -> Self {
+  pub fn new(op:&str) -> Self {
     Self{
-      op,
+      op:op.to_string(),
       node:Vec::new(),
     }
   }

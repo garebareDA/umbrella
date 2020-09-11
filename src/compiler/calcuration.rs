@@ -8,10 +8,10 @@ use super::compile::CodeGen;
 
 impl<'ctx> CodeGen<'ctx> {
   pub fn calcuration(&self, bin: &ast::BinaryAST) -> values::IntValue<'ctx> {
-    let mut op_stack: Vec<char> = Vec::new();
+    let mut op_stack: Vec<String> = Vec::new();
     let mut number_stack: Vec<values::BasicValueEnum> = Vec::new();
-    let op = bin.op;
-    op_stack.push(op);
+    let op = &bin.op;
+    op_stack.push(op.to_string());
 
     match &bin.node[0] {
       Types::Number(num) => {
@@ -45,7 +45,7 @@ impl<'ctx> CodeGen<'ctx> {
       }
 
       Types::Binary(bin) => {
-        op_stack.push(bin.op);
+        op_stack.push(bin.op.to_string());
       }
 
       _ => {
@@ -55,14 +55,14 @@ impl<'ctx> CodeGen<'ctx> {
 
     if op_stack.len() == 2 && number_stack.len() == 1 {
       let num_i32 = self.context.i32_type();
-      if op_stack[0] == '+' && op_stack[1] == '+' {
+      if op_stack[0] == "+" && op_stack[1] == "+" {
         let l_stack = number_stack[0].into_int_value();
         let r_stack = num_i32.const_int(1 as u64, false);
         let sum = self.builder.build_int_add(l_stack, r_stack, "sum");
         return sum;
       }
 
-      if op_stack[0] == '-' && op_stack[1] == '-' {
+      if op_stack[0] == "-" && op_stack[1] == "-" {
         let l_stack = number_stack[0].into_int_value();
         let r_stack = num_i32.const_int(1 as u64, false);
         let sum = self.builder.build_int_sub(l_stack, r_stack, "sub");
@@ -81,13 +81,13 @@ impl<'ctx> CodeGen<'ctx> {
       let l_stack = number_stack[l_index].into_int_value();
       let r_stack = number_stack[r_index].into_int_value();
 
-      if op == &'/' {
+      if op == &"/" {
         let sum = self.builder.build_int_unsigned_div(l_stack, r_stack, "div");
         number_stack[l_index] = values::BasicValueEnum::IntValue(sum);
         number_stack.remove(r_index);
       }
 
-      if op == &'*' {
+      if op == &"*" {
         let sum = self.builder.build_int_mul(l_stack, r_stack, "mul");
         number_stack[l_index] = values::BasicValueEnum::IntValue(sum);
         number_stack.remove(r_index);
@@ -107,13 +107,13 @@ impl<'ctx> CodeGen<'ctx> {
       let l_stack = number_stack[l_index].into_int_value();
       let r_stack = number_stack[r_index].into_int_value();
 
-      if op == &'+' {
+      if op == &"+" {
         let sum = self.builder.build_int_add(l_stack, r_stack, "sum");
         number_stack[l_index] = values::BasicValueEnum::IntValue(sum);
         number_stack.remove(r_index);
       }
 
-      if op == &'-' {
+      if op == &"-" {
         let sum = self.builder.build_int_sub(l_stack, r_stack, "sub");
         number_stack[l_index] = values::BasicValueEnum::IntValue(sum);
         number_stack.remove(r_index);
@@ -133,7 +133,7 @@ impl<'ctx> CodeGen<'ctx> {
       let l_stack = number_stack[l_index].into_int_value();
       let r_stack = number_stack[r_index].into_int_value();
 
-      if op == &'<' {
+      if op == &"<" {
         let sum =
           self
             .builder
@@ -142,7 +142,7 @@ impl<'ctx> CodeGen<'ctx> {
         number_stack.remove(r_index);
       }
 
-      if op == &'>' {
+      if op == &">" {
         let sum = self.builder.build_int_compare(
           inkwell::IntPredicate::SGT,
           l_stack,
@@ -161,7 +161,7 @@ impl<'ctx> CodeGen<'ctx> {
 
   fn calcuration_stack(
     &self,
-    op_stack: &mut Vec<char>,
+    op_stack: &mut Vec<String>,
     number_stack: &mut Vec<values::BasicValueEnum<'ctx>>,
     types: &ast::Types,
   ) {
@@ -176,7 +176,7 @@ impl<'ctx> CodeGen<'ctx> {
       }
 
       ast::Types::Binary(op) => {
-        op_stack.push(op.op);
+        op_stack.push(op.op.to_string());
         if !&op.node.is_empty() {
           self.calcuration_stack(op_stack, number_stack, &op.node[0]);
         }

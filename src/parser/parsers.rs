@@ -333,7 +333,7 @@ impl Persers {
       {
         self.index_add(1);
         let value = self.get_tokens(self.index).get_value();
-        let mut binary = ast::BinaryAST::new(value.chars().nth(0).unwrap());
+        let mut binary = ast::BinaryAST::new(value);
         binary.node.push(inner.clone());
         return Some(binary);
       }
@@ -356,15 +356,7 @@ impl Persers {
       || token == TOKEN._greater
       || token == TOKEN._less
     {
-      let mut ast_bin = ast::BinaryAST::new(
-        self
-          .get_tokens(self.index)
-          .get_value()
-          .chars()
-          .nth(0)
-          .unwrap(),
-      );
-
+      let mut ast_bin = ast::BinaryAST::new(self.get_tokens(self.index).get_value());
       match self.judge_calc() {
         Some(t) => {
           ast_bin.node.push(t);

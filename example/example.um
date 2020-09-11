@@ -10,3 +10,7 @@ fn b(a:int) int {
   print(a + 1);
   return a;
 }
+
+fn c() {
+  print(b);
+}
