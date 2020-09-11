@@ -20,14 +20,12 @@ impl<'ctx> CodeGen<'ctx> {
         number_stack.push(values::BasicValueEnum::IntValue(int));
       }
 
-      Types::Variable(vars) => {
-        match self.vars_serch(&vars.name) {
-          Ok(var) => {
-            number_stack.push(var.clone());
-          }
-          Err(()) => {}
+      Types::Variable(vars) => match self.vars_serch(&vars.name) {
+        Ok(var) => {
+          number_stack.push(var.clone());
         }
-      }
+        Err(()) => {}
+      },
 
       _ => {
         //error
@@ -81,13 +79,13 @@ impl<'ctx> CodeGen<'ctx> {
       let l_stack = number_stack[l_index].into_int_value();
       let r_stack = number_stack[r_index].into_int_value();
 
-      if op == &"/" {
+      if op == "/" {
         let sum = self.builder.build_int_unsigned_div(l_stack, r_stack, "div");
         number_stack[l_index] = values::BasicValueEnum::IntValue(sum);
         number_stack.remove(r_index);
       }
 
-      if op == &"*" {
+      if op == "*" {
         let sum = self.builder.build_int_mul(l_stack, r_stack, "mul");
         number_stack[l_index] = values::BasicValueEnum::IntValue(sum);
         number_stack.remove(r_index);
@@ -107,13 +105,13 @@ impl<'ctx> CodeGen<'ctx> {
       let l_stack = number_stack[l_index].into_int_value();
       let r_stack = number_stack[r_index].into_int_value();
 
-      if op == &"+" {
+      if op == "+" {
         let sum = self.builder.build_int_add(l_stack, r_stack, "sum");
         number_stack[l_index] = values::BasicValueEnum::IntValue(sum);
         number_stack.remove(r_index);
       }
 
-      if op == &"-" {
+      if op == "-" {
         let sum = self.builder.build_int_sub(l_stack, r_stack, "sub");
         number_stack[l_index] = values::BasicValueEnum::IntValue(sum);
         number_stack.remove(r_index);
@@ -133,7 +131,7 @@ impl<'ctx> CodeGen<'ctx> {
       let l_stack = number_stack[l_index].into_int_value();
       let r_stack = number_stack[r_index].into_int_value();
 
-      if op == &"<" {
+      if op == "<" {
         let sum =
           self
             .builder
@@ -142,12 +140,34 @@ impl<'ctx> CodeGen<'ctx> {
         number_stack.remove(r_index);
       }
 
-      if op == &">" {
+      if op == ">" {
         let sum = self.builder.build_int_compare(
           inkwell::IntPredicate::SGT,
           l_stack,
           r_stack,
           "greaterthan",
+        );
+        number_stack[l_index] = values::BasicValueEnum::IntValue(sum);
+        number_stack.remove(r_index);
+      }
+
+      if op == "<=" {
+        let sum = self.builder.build_int_compare(
+          inkwell::IntPredicate::SLE,
+          l_stack,
+          r_stack,
+          "greaterthanorequal",
+        );
+        number_stack[l_index] = values::BasicValueEnum::IntValue(sum);
+        number_stack.remove(r_index);
+      }
+
+      if op == ">=" {
+        let sum = self.builder.build_int_compare(
+          inkwell::IntPredicate::SGE,
+          l_stack,
+          r_stack,
+          "lessthanorequal",
         );
         number_stack[l_index] = values::BasicValueEnum::IntValue(sum);
         number_stack.remove(r_index);

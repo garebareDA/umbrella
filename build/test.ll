@@ -13,7 +13,7 @@ entry:
 
 define i32 @ifs() {
 entry:
-  br i32 12, label %then, label %else
+  br i1 true, label %then, label %else
 
 then:                                             ; preds = %entry
   %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @strings, i32 0, i32 0))
