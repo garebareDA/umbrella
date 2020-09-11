@@ -173,6 +173,28 @@ impl<'ctx> CodeGen<'ctx> {
         number_stack.remove(r_index);
       }
 
+      if op == "==" {
+        let sum = self.builder.build_int_compare(
+          inkwell::IntPredicate::EQ,
+          l_stack,
+          r_stack,
+          "equal",
+        );
+        number_stack[l_index] = values::BasicValueEnum::IntValue(sum);
+        number_stack.remove(r_index);
+      }
+
+      if op == "!=" {
+        let sum = self.builder.build_int_compare(
+          inkwell::IntPredicate::NE,
+          l_stack,
+          r_stack,
+          "notequal",
+        );
+        number_stack[l_index] = values::BasicValueEnum::IntValue(sum);
+        number_stack.remove(r_index);
+      }
+
       cal_counter += 1;
     }
 

@@ -333,7 +333,7 @@ impl Persers {
         return Some(binary);
       }
 
-      if token == TOKEN._greater || token == TOKEN._less || token == TOKEN._equal {
+      if token == TOKEN._greater || token == TOKEN._less || token == TOKEN._equal || token == TOKEN._exclamation{
         self.index_add(1);
         let token = self.get_tokens(self.index + 1).get_token();
         if token == TOKEN._equal {
@@ -375,10 +375,9 @@ impl Persers {
       return Some(ast::Types::Binary(ast_bin));
     }
 
-    if token == TOKEN._greater || token == TOKEN._less || token == TOKEN._equal {
+    if token == TOKEN._greater || token == TOKEN._less || token == TOKEN._equal || token == TOKEN._exclamation{
       let token = self.get_tokens(self.index + 1).get_token();
       let value = self.get_tokens(self.index + 1).get_value();
-      println!("{}", value);
       if token == TOKEN._equal {
         let mut ast_bin = ast::BinaryAST::new(&format!(
           "{}{}",
