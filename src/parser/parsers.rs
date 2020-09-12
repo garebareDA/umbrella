@@ -333,6 +333,10 @@ impl Persers {
         return Some(binary);
       }
 
+      if token == TOKEN._equal && self.get_tokens(self.index + 2).get_token() != TOKEN._equal {
+        return None;
+      }
+
       if token == TOKEN._greater || token == TOKEN._less || token == TOKEN._equal || token == TOKEN._exclamation{
         self.index_add(1);
         let token = self.get_tokens(self.index + 1).get_token();
