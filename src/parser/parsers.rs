@@ -324,16 +324,34 @@ impl Persers {
   fn check_calc(&mut self, inner: &ast::Types) -> Option<ast::BinaryAST> {
     if self.tokens.len() > self.index + 1 {
       let token = self.get_tokens(self.index + 1).get_token();
-      if token == TOKEN._add
-        || token == TOKEN._sub
-        || token == TOKEN._div
-        || token == TOKEN._multi
-        || token == TOKEN._greater
-        || token == TOKEN._less
+      if token == TOKEN._add || token == TOKEN._sub || token == TOKEN._div || token == TOKEN._multi
       {
         self.index_add(1);
         let value = self.get_tokens(self.index).get_value();
-        let mut binary = ast::BinaryAST::new(value.chars().nth(0).unwrap());
+        let mut binary = ast::BinaryAST::new(value);
+        binary.node.push(inner.clone());
+        return Some(binary);
+      }
+
+      if token == TOKEN._equal && self.get_tokens(self.index + 2).get_token() != TOKEN._equal {
+        return None;
+      }
+
+      if token == TOKEN._greater || token == TOKEN._less || token == TOKEN._equal || token == TOKEN._exclamation{
+        self.index_add(1);
+        let token = self.get_tokens(self.index + 1).get_token();
+        if token == TOKEN._equal {
+          self.index_add(1);
+          let value = self.get_tokens(self.index - 1).get_value();
+          let next_value = &self.get_tokens(self.index).get_value();
+          let value_op = format!("{}{}", value, next_value);
+          let mut binary = ast::BinaryAST::new(&value_op);
+          binary.node.push(inner.clone());
+          return Some(binary);
+        }
+
+        let value = self.get_tokens(self.index).get_value();
+        let mut binary = ast::BinaryAST::new(value);
         binary.node.push(inner.clone());
         return Some(binary);
       }
@@ -349,22 +367,38 @@ impl Persers {
 
     self.index_add(1);
     let token = self.get_tokens(self.index).get_token();
-    if token == TOKEN._add
-      || token == TOKEN._sub
-      || token == TOKEN._div
-      || token == TOKEN._multi
-      || token == TOKEN._greater
-      || token == TOKEN._less
-    {
-      let mut ast_bin = ast::BinaryAST::new(
-        self
-          .get_tokens(self.index)
-          .get_value()
-          .chars()
-          .nth(0)
-          .unwrap(),
-      );
+    if token == TOKEN._add || token == TOKEN._sub || token == TOKEN._div || token == TOKEN._multi {
+      let mut ast_bin = ast::BinaryAST::new(self.get_tokens(self.index).get_value());
+      match self.judge_calc() {
+        Some(t) => {
+          ast_bin.node.push(t);
+        }
 
+        None => {}
+      }
+      return Some(ast::Types::Binary(ast_bin));
+    }
+
+    if token == TOKEN._greater || token == TOKEN._less || token == TOKEN._equal || token == TOKEN._exclamation{
+      let token = self.get_tokens(self.index + 1).get_token();
+      let value = self.get_tokens(self.index + 1).get_value();
+      if token == TOKEN._equal {
+        let mut ast_bin = ast::BinaryAST::new(&format!(
+          "{}{}",
+          self.get_tokens(self.index).get_value(),
+          value
+        ));
+        self.index_add(1);
+        match self.judge_calc() {
+          Some(t) => {
+            ast_bin.node.push(t);
+          }
+          None => {}
+        }
+        return Some(ast::Types::Binary(ast_bin));
+      }
+
+      let mut ast_bin = ast::BinaryAST::new(self.get_tokens(self.index).get_value());
       match self.judge_calc() {
         Some(t) => {
           ast_bin.node.push(t);

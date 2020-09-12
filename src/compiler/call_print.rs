@@ -16,7 +16,6 @@ impl<'ctx> CodeGen<'ctx> {
           "printf",
         );
       }
-
       values::BasicValueEnum::PointerValue(_) => {
         let printf = self.module.get_function("printf");
         self.builder.build_call(printf.unwrap(), &[print], "printf");
