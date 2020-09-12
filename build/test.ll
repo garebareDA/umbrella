@@ -12,7 +12,7 @@ declare i32 @printf(i8*, ...)
 
 define i32 @main() {
 entry:
-  %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format, i32 0, i32 0), i32 1)
+  %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format, i32 0, i32 0), i32 2)
   %ifs = call i32 @ifs()
   %fors = call i32 @fors()
   %return = call i32 @function()
@@ -32,7 +32,7 @@ entry:
   br i1 false, label %then, label %else
 
 then:                                             ; preds = %entry
-  %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format.1, i32 0, i32 0), i32 1)
+  %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format.1, i32 0, i32 0), i32 2)
   br label %end
 
 else:                                             ; preds = %entry
