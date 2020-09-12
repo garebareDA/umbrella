@@ -137,9 +137,7 @@ impl<'ctx> CodeGen<'ctx> {
       }
 
       if op == "/" && 1 == ops {
-        println!("  {:?} {:?}", r_stack, l_stack);
         let sum = self.builder.build_int_unsigned_div(l_stack, r_stack, "div");
-        println!("  {:?}", sum);
         number_stack[l_index] = values::BasicValueEnum::IntValue(sum);
         number_stack.remove(r_index);
       }

@@ -7,14 +7,20 @@ if variable > 1 {
   print("else");
 }
 
+if variable > 1 {
+  print(variable);
+}else{
+  print("else");
+}
+
 for let i = 0; i < 5; i++ {
   print(i);
 }
 
-let fun = function();
+let fun = function(1);
 print(fun);
 
-fn function() int {
+fn function(a:int) int {
   print("function");
   return 1;
 }

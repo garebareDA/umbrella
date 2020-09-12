@@ -66,7 +66,7 @@ impl<'ctx> CodeGen<'ctx> {
             ast::Types::Variable(var) => match self.vars_serch(&var.name) {
               Ok(var) => {
                 self.print(*var);
-              },
+              }
               Err(()) => {}
             },
             _ => {}
@@ -78,22 +78,7 @@ impl<'ctx> CodeGen<'ctx> {
       ast::Types::Ifs(ifs) => {
         self.push_var_vec();
         self.push_fun_vec();
-        self.if_write(&ifs);
-        self.builder.position_at_end(basic_block);
-        if self.if_gen_stack == 0 {
-          let ifs = self.module.get_function("ifs");
-          self.builder.build_call(ifs.unwrap(), &[], "ifs");
-          self.if_gen_stack += 1;
-          self.push_var_vec_remove();
-          self.push_fun_vec_remove();
-          return;
-        }
-
-        let ifs = self
-          .module
-          .get_function(&format!("{}.{}", "ifs", self.if_gen_stack));
-        self.builder.build_call(ifs.unwrap(), &[], "ifs");
-        self.if_gen_stack += 1;
+        self.if_write(&ifs, basic_block);
         self.push_var_vec_remove();
         self.push_fun_vec_remove();
       }
@@ -101,22 +86,7 @@ impl<'ctx> CodeGen<'ctx> {
       ast::Types::Fors(fors) => {
         self.push_var_vec();
         self.push_fun_vec();
-        self.for_write(&fors);
-        self.builder.position_at_end(basic_block);
-        if self.for_gen_stack == 0 {
-          let ifs = self.module.get_function("fors");
-          self.builder.build_call(ifs.unwrap(), &[], "fors");
-          self.for_gen_stack += 1;
-          self.push_var_vec_remove();
-          self.push_fun_vec_remove();
-          return;
-        }
-
-        let fors = self
-          .module
-          .get_function(&format!("{}.{}", "fors", self.for_gen_stack));
-        self.builder.build_call(fors.unwrap(), &[], "fors");
-        self.for_gen_stack += 1;
+        self.for_write(&fors, basic_block);
         self.push_var_vec_remove();
         self.push_fun_vec_remove();
       }
@@ -131,8 +101,8 @@ impl<'ctx> CodeGen<'ctx> {
         self.return_write(&ret.node[0]);
       }
 
-    _ => {}
-  }
+      _ => {}
+    }
   }
 
   pub fn scope_write(

@@ -1,8 +1,9 @@
 use super::super::parser::ast;
 use super::compile::CodeGen;
+use inkwell::basic_block;
 
 impl<'ctx> CodeGen<'ctx> {
-  pub fn for_write(&mut self, fors: &ast::ForsAST) {
+  pub fn for_write(&mut self, fors: &ast::ForsAST, basic_block: basic_block::BasicBlock) {
     let i32_type = self.context.i32_type();
     let main_type = i32_type.fn_type(&[], false);
     let function = self.module.add_function("fors", main_type, None);
@@ -35,6 +36,8 @@ impl<'ctx> CodeGen<'ctx> {
     self
       .builder
       .build_return(Some(&i32_type.const_int(0, false)));
+    self.builder.position_at_end(basic_block);
+    self.builder.build_call(function, &[], "fors");
   }
 
   fn fors_init_inner(&self, init:&ast::Types) -> Result<(String, inkwell::values::IntValue), ()> {

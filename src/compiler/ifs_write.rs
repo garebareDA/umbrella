@@ -1,8 +1,9 @@
 use super::super::parser::ast;
 use super::compile::CodeGen;
+use inkwell::basic_block;
 
 impl<'ctx> CodeGen<'ctx> {
-  pub fn if_write(&mut self, ifs: &ast::IfsAST) {
+  pub fn if_write(&mut self, ifs: &ast::IfsAST, basic_block: basic_block::BasicBlock) {
     let i32_type = self.context.i32_type();
     let main_type = i32_type.fn_type(&[], false);
     let function = self.module.add_function("ifs", main_type, None);
@@ -34,6 +35,9 @@ impl<'ctx> CodeGen<'ctx> {
         self.builder.build_unconditional_branch(basic_block_end);
         self.builder.position_at_end(basic_block_else);
         self.builder.build_unconditional_branch(basic_block_end);
+
+        self.builder.position_at_end(basic_block);
+        self.builder.build_call(function, &[], "ifs");
       }
 
       _ => {}
