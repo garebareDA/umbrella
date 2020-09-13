@@ -33,12 +33,23 @@ pub fn compile(ast: ast::RootAST) {
     for_gen_stack: 0,
   };
   code_gen.add_fun_printf();
-  code_gen.set_main_run(&ast.node);
-  code_gen.set_return();
+  match code_gen.set_main_run(&ast.node) {
+    Ok(_) => {
+      code_gen.set_return();
+    }
+
+    Err(s) => {
+      eprintln!("{}", s);
+    }
+  }
 }
 
 impl<'ctx> CodeGen<'ctx> {
-  pub fn judge(&mut self, types: &ast::Types, basic_block: inkwell::basic_block::BasicBlock) {
+  pub fn judge(
+    &mut self,
+    types: &ast::Types,
+    basic_block: inkwell::basic_block::BasicBlock,
+  ) -> Result<(), String> {
     match types {
       ast::Types::Call(call) => {
         if call.callee == "print" && call.argument.len() < 2 {
@@ -60,59 +71,109 @@ impl<'ctx> CodeGen<'ctx> {
 
             ast::Types::Binary(bin) => {
               let sum = self.calcuration(bin);
-              self.print(values::BasicValueEnum::IntValue(sum));
+              match sum {
+                Ok(sum) => {
+                  self.print(values::BasicValueEnum::IntValue(sum));
+                }
+
+                Err(s) => {
+                  return Err(s);
+                }
+              }
             }
 
             ast::Types::Variable(var) => match self.vars_serch(&var.name) {
               Ok(var) => {
                 self.print(*var);
               }
-              Err(()) => {}
+              Err(s) => {
+                return Err(s);
+              }
             },
-            _ => {}
+            _ => return Err("print argment error".to_string()),
+          }
+          return Ok(());
+        }
+
+        let call = self.call_write(call);
+        match call {
+          Ok(_) => {}
+          Err(s) => {
+            return Err(s);
           }
         }
-        self.call_write(call);
       }
 
       ast::Types::Ifs(ifs) => {
-        self.if_write(&ifs, basic_block);
+        let ifs = self.if_write(&ifs, basic_block);
+        match ifs {
+          Ok(_) => {}
+          Err(s) => {
+            return Err(s);
+          }
+        }
       }
 
       ast::Types::Fors(fors) => {
-        self.for_write(&fors, basic_block);
+        let fors = self.for_write(&fors, basic_block);
+        match fors {
+          Ok(_) => {}
+          Err(s) => {
+            return Err(s);
+          }
+        }
       }
 
       ast::Types::Variable(var) => {
         if !var.node.is_empty() {
-          self.var_write(&var.name, &var.node[0]);
+          let var = self.var_write(&var.name, &var.node[0]);
+          match var {
+            Ok(_) => {}
+            Err(s) => {
+              return Err(s);
+            }
+          }
         }
       }
 
       ast::Types::Return(ret) => {
-        self.return_write(&ret.node[0]);
+        let returns = self.return_write(&ret.node[0]);
+        match returns {
+          Ok(_) => {}
+          Err(s) => {
+            return Err(s);
+          }
+        }
       }
 
       _ => {}
     }
+
+    return Ok(());
   }
 
   pub fn scope_write(
     &mut self,
     node: &Vec<ast::Types>,
     basic_block: inkwell::basic_block::BasicBlock,
-  ) {
+  ) -> Result<(), String> {
     for ast in node.iter() {
       self.builder.position_at_end(basic_block);
-      self.judge(ast, basic_block);
+      match self.judge(ast, basic_block) {
+        Ok(_) => {}
+        Err(s) => {
+          return Err(s);
+        }
+      }
     }
+    return Ok(());
   }
 
   fn start_function_write(
     &mut self,
     node: &Vec<ast::Types>,
     basic_block: inkwell::basic_block::BasicBlock,
-  ) {
+  ) -> Result<(), String> {
     for ast in node.iter() {
       self.builder.position_at_end(basic_block);
       match ast {
@@ -120,25 +181,44 @@ impl<'ctx> CodeGen<'ctx> {
           self.push_fun(fun, &fun.name);
           self.push_var_vec();
           self.push_fun_vec();
-          self.function_write(&fun);
+          let fun = self.function_write(&fun);
+          match fun {
+            Ok(_) => {}
+            Err(s) => {
+              return Err(s);
+            }
+          }
           self.push_var_vec_remove();
           self.push_fun_vec_remove();
         }
         _ => {}
       }
     }
+
+    return Ok(());
   }
 
-  fn set_main_run(&mut self, node: &Vec<ast::Types>) {
+  fn set_main_run(&mut self, node: &Vec<ast::Types>) -> Result<(), String> {
     self.push_var_vec();
     self.push_fun_vec();
     let i32_type = self.context.i32_type();
     let main_type = i32_type.fn_type(&[], false);
     let function = self.module.add_function("main", main_type, None);
     let basic_block = self.context.append_basic_block(function, "entry");
-    self.start_function_write(node, basic_block);
-    self.scope_write(node, basic_block);
+    match self.start_function_write(node, basic_block) {
+      Ok(_) => {}
+      Err(s) => {
+        return Err(s);
+      }
+    }
+    match self.scope_write(node, basic_block) {
+      Ok(_) => {}
+      Err(s) => {
+        return Err(s);
+      }
+    }
     self.builder.position_at_end(basic_block);
+    return Ok(());
   }
 
   pub fn add_fun_printf(&mut self) {

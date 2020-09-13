@@ -26,25 +26,40 @@ impl Function {
 }
 
 impl<'ctx> CodeGen<'ctx> {
-  pub fn function_write(&mut self, funs: &ast::FunctionAST) {
-    let (fn_type, name_vec) = self.function_param(&funs.param, &funs.returns);
-    let function = self.module.add_function(&funs.name, fn_type, None);
-    let basic_block = self.context.append_basic_block(function, "entry");
-    self.builder.position_at_end(basic_block);
-    let function_param = function.get_params();
-    self.push_var_param(function_param, &name_vec);
-    self.scope_write(&funs.node, basic_block);
-    let i32_type = self.context.i32_type();
-    self
-      .builder
-      .build_return(Some(&i32_type.const_int(0, false)));
+  pub fn function_write(&mut self, funs: &ast::FunctionAST) -> Result<(), String> {
+    let params = self.function_param(&funs.param, &funs.returns);
+    match params {
+      Ok((fn_type, name_vec)) => {
+        let function = self.module.add_function(&funs.name, fn_type, None);
+        let basic_block = self.context.append_basic_block(function, "entry");
+        self.builder.position_at_end(basic_block);
+        let function_param = function.get_params();
+        self.push_var_param(function_param, &name_vec);
+        let scope = self.scope_write(&funs.node, basic_block);
+        match scope {
+          Ok(_) => {}
+          Err(s) => {
+            return Err(s);
+          }
+        }
+        let i32_type = self.context.i32_type();
+        self
+          .builder
+          .build_return(Some(&i32_type.const_int(0, false)));
+
+        return Ok(());
+      }
+      Err(s) => {
+        return Err(s);
+      }
+    }
   }
 
   fn function_param(
     &self,
     params: &Vec<ast::Types>,
     return_type: &Option<ast::VariableType>,
-  ) -> (types::FunctionType<'ctx>, Vec<String>) {
+  ) -> Result<(types::FunctionType<'ctx>, Vec<String>), String> {
     let i32_type = self.context.i32_type();
     let bool_type = self.context.bool_type();
     let i8_type = self.context.i8_type();
@@ -71,34 +86,36 @@ impl<'ctx> CodeGen<'ctx> {
             }
           }
 
-          _ => {}
+          _ => {
+            return Err("function param error".to_string());
+          }
         },
         _ => {
-          //error
+          return Err("function param error".to_string());
         }
       }
     }
 
     match return_type {
       Some(t) => match t {
-        ast::VariableType::Int => return (i32_type.fn_type(&param_vec, false), name_vec),
+        ast::VariableType::Int => return Ok((i32_type.fn_type(&param_vec, false), name_vec)),
 
         ast::VariableType::Bool => {
-          return (bool_type.fn_type(&param_vec, false), name_vec);
+          return Ok((bool_type.fn_type(&param_vec, false), name_vec));
         }
 
         ast::VariableType::Strings => {
-          return (
+          return Ok((
             i8_type
               .ptr_type(AddressSpace::Generic)
               .fn_type(&param_vec, false),
             name_vec,
-          );
+          ));
         }
       },
 
       None => {
-        return (i32_type.fn_type(&param_vec, false), name_vec);
+        return Ok((i32_type.fn_type(&param_vec, false), name_vec));
       }
     }
   }
@@ -115,17 +132,5 @@ impl<'ctx> CodeGen<'ctx> {
     let fun_value = Function::new(name, value);
     let len = self.function_vec.len() - 1;
     self.function_vec[len].push(fun_value);
-  }
-
-  pub fn funs_serch(&self, name: &str) -> Result<&ast::FunctionAST, ()> {
-    for reverse in self.function_vec.iter().rev() {
-      for funs in reverse.iter().rev() {
-        if funs.get_name() == name {
-          return Ok(&funs.get_value());
-        }
-      }
-    }
-
-    return Err(());
   }
 }

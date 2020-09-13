@@ -3,7 +3,11 @@ use super::compile::CodeGen;
 use inkwell::basic_block;
 
 impl<'ctx> CodeGen<'ctx> {
-  pub fn if_write(&mut self, ifs: &ast::IfsAST, basic_block: basic_block::BasicBlock) {
+  pub fn if_write(
+    &mut self,
+    ifs: &ast::IfsAST,
+    basic_block: basic_block::BasicBlock,
+  ) -> Result<(), String> {
     self.push_var_vec();
     self.push_fun_vec();
 
@@ -19,17 +23,37 @@ impl<'ctx> CodeGen<'ctx> {
       ast::Types::Binary(bin) => {
         let basic_block_then = self.context.append_basic_block(function, "then");
         self.builder.position_at_end(basic_block_then);
-        self.scope_write(&ifs.then, basic_block_then);
+        let scope = self.scope_write(&ifs.then, basic_block_then);
+        match scope {
+          Ok(_) => {}
+          Err(s) => {
+            return Err(s);
+          }
+        }
 
         let basic_block_else = self.context.append_basic_block(function, "else");
         self.builder.position_at_end(basic_block_else);
-        self.scope_write(&ifs.elses, basic_block_else);
+        let scope = self.scope_write(&ifs.elses, basic_block_else);
+        match scope {
+          Ok(_) => {}
+          Err(s) => {
+            return Err(s);
+          }
+        }
 
         self.builder.position_at_end(basic_block_entry);
         let sum = self.calcuration(&bin);
-        self
-          .builder
-          .build_conditional_branch(sum, basic_block_then, basic_block_else);
+        match sum {
+          Ok(sum) => {
+            self
+              .builder
+              .build_conditional_branch(sum, basic_block_then, basic_block_else);
+          }
+
+          Err(s) => {
+            return Err(s);
+          }
+        }
 
         let basic_block_end = self.context.append_basic_block(function, "end");
         self.builder.position_at_end(basic_block_end);
@@ -45,12 +69,15 @@ impl<'ctx> CodeGen<'ctx> {
         self.push_var_vec_remove();
         self.push_fun_vec_remove();
 
-        println!("{:?}", self.var_vec);
         self.builder.position_at_end(basic_block);
-        self.builder.build_call(function, &self.get_argment(&name_vec).unwrap(), "ifs");
+        self
+          .builder
+          .build_call(function, &self.get_argment(&name_vec).unwrap(), "ifs");
       }
 
-      _ => {}
+      _ => return Err("not found oprater".to_string()),
     }
+
+    return Ok(());
   }
 }

@@ -4,7 +4,7 @@ use super::compile::CodeGen;
 use inkwell::values;
 
 impl<'ctx> CodeGen<'ctx> {
-  pub fn return_write(&self, node: &ast::Types) {
+  pub fn return_write(&self, node: &ast::Types) -> Result<(), String> {
     match node {
       ast::Types::Strings(strings) => {
         let format = self
@@ -20,7 +20,15 @@ impl<'ctx> CodeGen<'ctx> {
       }
       ast::Types::Binary(bin) => {
         let sum = self.calcuration(bin);
-        self.builder.build_return(Some(&sum));
+        match sum {
+          Ok(sum) => {
+            self.builder.build_return(Some(&sum));
+          }
+
+          Err(s) => {
+            return Err(s);
+          }
+        }
       }
       ast::Types::Variable(var) => match self.vars_serch(&var.name) {
         Ok(t) => match t {
@@ -30,11 +38,19 @@ impl<'ctx> CodeGen<'ctx> {
           values::BasicValueEnum::PointerValue(point) => {
             self.builder.build_return(Some(point));
           }
-          _ => {}
+          _ => {
+            return Err("return variable type error".to_string());
+          }
         },
-        Err(()) => {}
+        Err(s) => {
+          return Err(s);
+        }
       },
-      _ => {}
+      _ => {
+        return Err("return type error".to_string());
+      }
     }
+
+    return Ok(());
   }
 }

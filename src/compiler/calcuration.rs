@@ -7,7 +7,7 @@ use super::super::parser::ast::Types;
 use super::compile::CodeGen;
 
 impl<'ctx> CodeGen<'ctx> {
-  pub fn calcuration(&self, bin: &ast::BinaryAST) -> values::IntValue<'ctx> {
+  pub fn calcuration(&self, bin: &ast::BinaryAST) -> Result<values::IntValue<'ctx>, String> {
     let mut op_stack: Vec<String> = Vec::new();
     let mut number_stack: Vec<values::BasicValueEnum> = Vec::new();
     let op = &bin.op;
@@ -24,11 +24,13 @@ impl<'ctx> CodeGen<'ctx> {
         Ok(var) => {
           number_stack.push(var.clone());
         }
-        Err(()) => {}
+        Err(s) => {
+          return Err(s);
+        }
       },
 
       _ => {
-        //error
+        return Err("calculation formula type error".to_string());
       }
     }
 
@@ -38,7 +40,13 @@ impl<'ctx> CodeGen<'ctx> {
         let int = num_i32.const_int(num.num as u64, false);
         number_stack.push(values::BasicValueEnum::IntValue(int));
         if bin.node.len() > 1 && !num.node.is_empty() {
-          self.calcuration_stack(&mut op_stack, &mut number_stack, &num.node[0]);
+          let result = self.calcuration_stack(&mut op_stack, &mut number_stack, &num.node[0]);
+          match result {
+            Ok(_) => {}
+            Err(s) => {
+              return Err(s);
+            }
+          }
         }
       }
 
@@ -47,7 +55,7 @@ impl<'ctx> CodeGen<'ctx> {
       }
 
       _ => {
-        //error
+        return Err("calculation formula type error".to_string());
       }
     }
 
@@ -57,21 +65,21 @@ impl<'ctx> CodeGen<'ctx> {
         let l_stack = number_stack[0].into_int_value();
         let r_stack = num_i32.const_int(1 as u64, false);
         let sum = self.builder.build_int_add(l_stack, r_stack, "sum");
-        return sum;
+        return Ok(sum);
       }
 
       if op_stack[0] == "-" && op_stack[1] == "-" {
         let l_stack = number_stack[0].into_int_value();
         let r_stack = num_i32.const_int(1 as u64, false);
         let sum = self.builder.build_int_sub(l_stack, r_stack, "sub");
-        return sum;
+        return Ok(sum);
       }
     }
     self.calcuration_op(&op_stack, &mut number_stack, 1);
     self.calcuration_op(&op_stack, &mut number_stack, 2);
     self.calcuration_op(&op_stack, &mut number_stack, 3);
 
-    return number_stack[0].into_int_value();
+    return Ok(number_stack[0].into_int_value());
   }
 
   fn calcuration_stack(
@@ -79,21 +87,33 @@ impl<'ctx> CodeGen<'ctx> {
     op_stack: &mut Vec<String>,
     number_stack: &mut Vec<values::BasicValueEnum<'ctx>>,
     types: &ast::Types,
-  ) {
+  ) -> Result<(), String> {
     let num_i32 = self.context.i32_type();
     match types {
       ast::Types::Number(num) => {
         let int = num_i32.const_int(num.num as u64, false);
         number_stack.push(values::BasicValueEnum::IntValue(int));
         if !&num.node.is_empty() {
-          self.calcuration_stack(op_stack, number_stack, &num.node[0]);
+          let result = self.calcuration_stack(op_stack, number_stack, &num.node[0]);
+          match result {
+            Ok(_) => {}
+            Err(s) => {
+              return Err(s);
+            }
+          }
         }
       }
 
       ast::Types::Binary(op) => {
         op_stack.push(op.op.to_string());
         if !&op.node.is_empty() {
-          self.calcuration_stack(op_stack, number_stack, &op.node[0]);
+          let result = self.calcuration_stack(op_stack, number_stack, &op.node[0]);
+          match result {
+            Ok(_) => {}
+            Err(s) => {
+              return Err(s);
+            }
+          }
         }
       }
 
@@ -101,14 +121,23 @@ impl<'ctx> CodeGen<'ctx> {
         Ok(var) => {
           number_stack.push(var.clone());
           if !&vars.node.is_empty() {
-            self.calcuration_stack(op_stack, number_stack, &vars.node[0]);
+            let result = self.calcuration_stack(op_stack, number_stack, &vars.node[0]);
+            match result {
+              Ok(_) => {}
+              Err(s) => {
+                return Err(s);
+              }
+            }
           }
         }
 
-        Err(()) => {}
+        Err(s) => {
+          return Err(s);
+        }
       },
-      _ => {}
+      _ => return Err("calculation stack error".to_string()),
     }
+    return Ok(());
   }
 
   fn calcuration_op(
@@ -123,7 +152,7 @@ impl<'ctx> CodeGen<'ctx> {
       let l_index = i - sub_len;
       let r_index = i + 1 - sub_len;
 
-      if number_stack.len() == 1 || number_stack.len() <= r_index{
+      if number_stack.len() == 1 || number_stack.len() <= r_index {
         break;
       }
 
