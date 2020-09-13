@@ -18,17 +18,24 @@ impl Persers {
     }
   }
 
-  pub fn run(&mut self) -> ast::RootAST {
+  pub fn run(&mut self) -> Result<ast::RootAST, String> {
     let mut root = ast::RootAST::new();
     let len = self.tokens.len();
     loop {
-      let result = self.judge();
+      let token = self.get_tokens(self.index).get_token();
+      if token == TOKEN._end {
+        self.index_add(1);
+        continue;
+      }
 
+      let result = self.judge();
       match result {
         Ok(r) => {
           root.node.push(r);
         }
-        Err(()) => {}
+        Err(s) => {
+          return Err(s);
+        }
       }
 
       self.index_add(1);
@@ -36,16 +43,22 @@ impl Persers {
         break;
       }
     }
-    return root;
+    return Ok(root);
   }
 
-  pub fn scope(&mut self) -> Vec<ast::Types> {
+  pub fn scope(&mut self) -> Result<Vec<ast::Types>, String> {
     let len = self.tokens.len();
     let mut types: Vec<ast::Types> = Vec::new();
     loop {
       let token = self.get_tokens(self.index).get_token();
+
+      if token == TOKEN._end {
+        self.index_add(1);
+        continue;
+      }
+
       if token == TOKEN._braces_right {
-        return types;
+        return Ok(types);
       }
 
       let result = self.judge();
@@ -53,17 +66,19 @@ impl Persers {
         Ok(r) => {
           types.push(r);
         }
-        Err(()) => {}
+        Err(s) => {
+          return Err(s);
+        }
       }
 
       self.index_add(1);
       if len <= self.index {
-        return types;
+        return Ok(types);
       }
     }
   }
 
-  fn judge(&mut self) -> Result<ast::Types, ()> {
+  fn judge(&mut self) -> Result<ast::Types, String> {
     let token = self.get_tokens(self.index).get_token();
     let len = self.tokens.len();
 
@@ -86,7 +101,9 @@ impl Persers {
               }
             }
 
-            Err(()) => {}
+            Err(s) => {
+              return Err(s);
+            }
           }
           self.index_add(1);
           if self.get_tokens(self.index).get_token() == TOKEN._paren_right {
@@ -142,17 +159,27 @@ impl Persers {
                   vars.node.push(t);
                 }
 
-                Err(()) => {}
+                Err(s) => {
+                  return Err(s);
+                }
               }
               return Ok(ast::Types::Variable(vars));
             }
 
             _ => {}
           },
-          Err(()) => {}
+          Err(s) => {
+            return Err(s);
+          }
         }
       } else {
-        //error
+        if !none_type {
+          let value = self.get_tokens(self.index + 2).get_value();
+          return Err(format!("{} is parse error", value));
+        } else if !ok_type {
+          let value = self.get_tokens(self.index + 3).get_value();
+          return Err(format!("{} is parse error", value));
+        }
       }
     }
 
@@ -194,9 +221,20 @@ impl Persers {
           ifs.ifs.push(types);
           if self.get_tokens(self.index).get_token() == TOKEN._braces_left {
             self.index_add(1);
-            ifs.then = self.scope();
+            match self.scope() {
+              Ok(node) => {
+                ifs.then = node;
+              }
+
+              Err(e) => {
+                return Err(e);
+              }
+            };
           } else {
-            //error
+            return Err(format!(
+              " \"{}\" If statement parsing error",
+              self.get_tokens(self.index).get_value()
+            ));
           }
 
           if self.tokens.len() <= self.index + 1 {
@@ -207,17 +245,27 @@ impl Persers {
             self.index_add(2);
             if self.get_tokens(self.index).get_token() == TOKEN._braces_left {
               self.index_add(1);
-              ifs.elses = self.scope();
+              match self.scope() {
+                Ok(node) => {
+                  ifs.elses = node;
+                }
+                Err(e) => {
+                  return Err(e);
+                }
+              }
             } else {
-              //error
+              return Err(format!(
+                " \"{}\" Else statement parsing error",
+                self.get_tokens(self.index).get_value()
+              ));
             }
           }
 
           return Ok(ast::Types::Ifs(ifs));
         }
 
-        Err(()) => {
-          //error
+        Err(s) => {
+          return Err(s);
         }
       };
     }
@@ -230,9 +278,14 @@ impl Persers {
           ast::Types::Variable(_) => {
             fors.init.push(t);
           }
-          _ => {}
+          _ => {
+            return Err(format!(
+              "{} Unable to initialize for",
+              self.get_tokens(self.index).get_value()
+            ));
+          }
         },
-        Err(()) => {}
+        Err(s) => return Err(s),
       }
       self.index_add(2);
 
@@ -241,9 +294,17 @@ impl Persers {
           ast::Types::Binary(_) => {
             fors.ifs.push(t);
           }
-          _ => {}
+          _ => {
+            return Err(format!(
+              "{}
+              Termination condition error",
+              self.get_tokens(self.index).get_value()
+            ));
+          }
         },
-        Err(()) => {}
+        Err(s) => {
+          return Err(s);
+        }
       }
       self.index_add(1);
 
@@ -252,13 +313,26 @@ impl Persers {
           ast::Types::Binary(_) => {
             fors.count.push(t);
           }
-          _ => {}
+          _ => {
+            return Err(format!(
+              "{} Counter error",
+              self.get_tokens(self.index).get_value()
+            ));
+          }
         },
-        Err(()) => {}
+        Err(s) => return Err(s),
       }
       self.index_add(1);
 
-      fors.node = self.scope();
+      match self.scope() {
+        Ok(node) => {
+          fors.node = node;
+        }
+
+        Err(s) => {
+          return Err(s);
+        }
+      }
       return Ok(ast::Types::Fors(fors));
     }
 
@@ -271,9 +345,14 @@ impl Persers {
         if self.get_tokens(self.index).get_token() == TOKEN._paren_left {
           loop {
             self.index_add(1);
-            if self.get_tokens(self.index).get_token() == TOKEN._paren_right {
+            let token =  self.get_tokens(self.index).get_token();
+            if token == TOKEN._paren_right {
               self.index_add(1);
               break;
+            }
+
+            if token == TOKEN._comma {
+              continue;
             }
 
             let param = self.judge();
@@ -281,7 +360,9 @@ impl Persers {
               Ok(t) => {
                 function_ast.param.push(t);
               }
-              Err(()) => {}
+              Err(s) => {
+                return Err(s);
+              }
             }
           }
 
@@ -293,7 +374,15 @@ impl Persers {
 
           if self.get_tokens(self.index).get_token() == TOKEN._braces_left {
             self.index_add(1);
-            function_ast.node = self.scope();
+            match self.scope() {
+              Ok(node) => {
+                function_ast.node = node;
+              }
+
+              Err(s) => {
+                return Err(s);
+              }
+            }
           }
 
           return Ok(ast::Types::Function(function_ast));
@@ -314,11 +403,16 @@ impl Persers {
             return Ok(ast::Types::Return(returns_ast));
           }
         },
-        Err(()) => {}
+        Err(s) => {
+          return Err(s);
+        }
       }
     }
 
-    return Err(());
+    return Err(format!(
+      "{} is parse error",
+      self.get_tokens(self.index).get_value()
+    ));
   }
 
   fn check_calc(&mut self, inner: &ast::Types) -> Option<ast::BinaryAST> {
@@ -337,7 +431,11 @@ impl Persers {
         return None;
       }
 
-      if token == TOKEN._greater || token == TOKEN._less || token == TOKEN._equal || token == TOKEN._exclamation{
+      if token == TOKEN._greater
+        || token == TOKEN._less
+        || token == TOKEN._equal
+        || token == TOKEN._exclamation
+      {
         self.index_add(1);
         let token = self.get_tokens(self.index + 1).get_token();
         if token == TOKEN._equal {
@@ -379,7 +477,11 @@ impl Persers {
       return Some(ast::Types::Binary(ast_bin));
     }
 
-    if token == TOKEN._greater || token == TOKEN._less || token == TOKEN._equal || token == TOKEN._exclamation{
+    if token == TOKEN._greater
+      || token == TOKEN._less
+      || token == TOKEN._equal
+      || token == TOKEN._exclamation
+    {
       let token = self.get_tokens(self.index + 1).get_token();
       let value = self.get_tokens(self.index + 1).get_value();
       if token == TOKEN._equal {
@@ -461,7 +563,7 @@ mod tests {
   fn variable() {
     let lex_result = lexers::run("test");
     let mut parser = parsers::Persers::new(lex_result);
-    let result = parser.run();
+    let result = parser.run().unwrap();
     match result.node[0] {
       ast::Types::Variable(_) => {}
       _ => panic!("not"),
@@ -472,7 +574,7 @@ mod tests {
   fn strings() {
     let lex_result = lexers::run("\"test\"");
     let mut parser = parsers::Persers::new(lex_result);
-    let result = parser.run();
+    let result = parser.run().unwrap();
     match result.node[0] {
       ast::Types::Strings(_) => {}
       _ => panic!("not"),
@@ -481,9 +583,9 @@ mod tests {
 
   #[test]
   fn callee() {
-    let lex_result = lexers::run("test()");
+    let lex_result = lexers::run("test(a)");
     let mut parser = parsers::Persers::new(lex_result);
-    let result = parser.run();
+    let result = parser.run().unwrap();
     match result.node[0] {
       ast::Types::Call(_) => {}
       _ => panic!("not"),
@@ -494,7 +596,7 @@ mod tests {
   fn number() {
     let lex_result = lexers::run("1111");
     let mut parser = parsers::Persers::new(lex_result);
-    let result = parser.run();
+    let result = parser.run().unwrap();
     match result.node[0] {
       ast::Types::Number(_) => {}
       _ => panic!("not"),
@@ -505,7 +607,7 @@ mod tests {
   fn calu() {
     let lex_result = lexers::run("1 + 1 + 1 + 1");
     let mut parser = parsers::Persers::new(lex_result);
-    let result = parser.run();
+    let result = parser.run().unwrap();
     match result.node[0] {
       ast::Types::Binary(_) => {}
       _ => panic!("not"),
@@ -523,7 +625,7 @@ mod tests {
     }",
     );
     let mut parser = parsers::Persers::new(lex_result);
-    let result = parser.run();
+    let result = parser.run().unwrap();
     match result.node[0] {
       ast::Types::Ifs(_) => {}
       _ => panic!("not"),
@@ -538,7 +640,7 @@ mod tests {
       }",
     );
     let mut parser = parsers::Persers::new(lex_result);
-    let result = parser.run();
+    let result = parser.run().unwrap();
     match result.node[0] {
       ast::Types::Fors(_) => {}
       _ => panic!("not"),
@@ -549,7 +651,7 @@ mod tests {
   fn function() {
     let lex_result = lexers::run("fn a (a:int, b:string){}");
     let mut parser = parsers::Persers::new(lex_result);
-    let result = parser.run();
+    let result = parser.run().unwrap();
     match result.node[0] {
       ast::Types::Function(_) => {}
       _ => panic!("not"),
@@ -560,7 +662,7 @@ mod tests {
   fn print() {
     let lex_result = lexers::run("print(\"a\")");
     let mut parser = parsers::Persers::new(lex_result);
-    let result = parser.run();
+    let result = parser.run().unwrap();
     match result.node[0] {
       ast::Types::Call(_) => {}
       _ => panic!("not"),

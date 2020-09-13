@@ -1,6 +1,8 @@
 use super::super::parser::ast;
 use super::compile::CodeGen;
+use inkwell::types;
 use inkwell::values;
+use inkwell::AddressSpace;
 
 #[derive(Debug)]
 pub struct Var<'ctx> {
@@ -26,7 +28,7 @@ impl<'ctx> Var<'ctx> {
 }
 
 impl<'ctx> CodeGen<'ctx> {
-  pub fn var_write(&mut self, name: &str, value: &ast::Types) {
+  pub fn var_write(&mut self, name: &str, value: &ast::Types) -> Result<(), String> {
     match value {
       ast::Types::Number(num) => {
         let i32_type = self.context.i32_type();
@@ -35,7 +37,15 @@ impl<'ctx> CodeGen<'ctx> {
       }
       ast::Types::Binary(bin) => {
         let sum = self.calcuration(bin);
-        self.push_var(values::BasicValueEnum::IntValue(sum), name);
+        match sum {
+          Ok(sum) => {
+            self.push_var(values::BasicValueEnum::IntValue(sum), name);
+          }
+
+          Err(s) => {
+            return Err(s);
+          }
+        }
       }
       ast::Types::Strings(strings) => {
         let format = self
@@ -47,11 +57,23 @@ impl<'ctx> CodeGen<'ctx> {
         );
       }
       ast::Types::Call(call) => {
-        let returns = self.call_write(call).unwrap();
-        self.push_var(returns.try_as_basic_value().left().unwrap(), name);
+        let returns = self.call_write(call);
+        match returns {
+          Ok(returns) => {
+            self.push_var(returns.try_as_basic_value().left().unwrap(), name);
+          }
+
+          Err(s) => {
+            return Err(s);
+          }
+        }
       }
-      _ => {}
+      _ => {
+        return Err(format!("{} is type error", name));
+      }
     }
+
+    return Ok(());
   }
 
   pub fn push_var_vec(&mut self) {
@@ -68,7 +90,7 @@ impl<'ctx> CodeGen<'ctx> {
     self.var_vec[len].push(var_value);
   }
 
-  pub fn vars_serch(&self, name: &str) -> Result<&values::BasicValueEnum<'ctx>, ()> {
+  pub fn vars_serch(&self, name: &str) -> Result<&values::BasicValueEnum<'ctx>, String> {
     for reverse in self.var_vec.iter().rev() {
       for vars in reverse.iter().rev() {
         if vars.get_name() == name {
@@ -77,20 +99,56 @@ impl<'ctx> CodeGen<'ctx> {
       }
     }
 
-    return Err(());
+    return Err(format!("{} Variable not found", name));
   }
 
-  pub fn change_value(
-    &self,
-    value: &values::AnyValueEnum<'ctx>,
-  ) -> Result<values::BasicValueEnum<'ctx>, ()> {
-    match value {
-      values::AnyValueEnum::IntValue(int) => Ok(values::BasicValueEnum::IntValue(int.clone())),
-      values::AnyValueEnum::PhiValue(phi) => Ok(values::BasicValueEnum::IntValue(
-        phi.as_basic_value().into_int_value(),
-      )),
-      values::AnyValueEnum::PointerValue(pointer) => Ok(values::BasicValueEnum::PointerValue(pointer.clone())),
-      _ => Err(()),
+  pub fn vars_type(&self) -> (Vec<types::BasicTypeEnum<'ctx>>, Vec<String>) {
+    let i32_type = self.context.i32_type();
+    let i8_type = self.context.i8_type();
+    let mut types: Vec<types::BasicTypeEnum<'ctx>> = Vec::new();
+    let mut name_vec: Vec<String> = Vec::new();
+    for reverse in self.var_vec.iter().rev() {
+      for vars in reverse.iter().rev() {
+        match vars.value {
+          values::BasicValueEnum::IntValue(_) => types.push(i32_type.into()),
+          values::BasicValueEnum::PointerValue(_) => {
+            types.push(i8_type.ptr_type(AddressSpace::Generic).into())
+          }
+          _ => {}
+        }
+        name_vec.push(vars.name.to_string());
+      }
     }
+
+    return (types, name_vec);
+  }
+
+  pub fn push_var_param(
+    &mut self,
+    function_param: Vec<values::BasicValueEnum<'ctx>>,
+    name_vec: &Vec<String>,
+  ) {
+    for (index, param) in function_param.iter().enumerate() {
+      let name = &name_vec[index];
+      let value = values::BasicValueEnum::IntValue(param.into_int_value());
+      self.push_var(value, name);
+    }
+  }
+
+  pub fn get_argment(
+    &self,
+    name_vec: &Vec<String>,
+  ) -> Result<Vec<values::BasicValueEnum<'ctx>>, String> {
+    let mut arguments: Vec<values::BasicValueEnum<'ctx>> = Vec::new();
+    for name in name_vec.iter() {
+      match self.vars_serch(name) {
+        Ok(value) => {
+          arguments.push(value.clone());
+        }
+        Err(s) => return Err(s),
+      }
+    }
+
+    return Ok(arguments);
   }
 }

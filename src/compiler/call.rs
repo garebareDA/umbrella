@@ -4,39 +4,44 @@ use super::compile::CodeGen;
 use inkwell::values;
 
 impl<'ctx> CodeGen<'ctx> {
-  pub fn call_write(&self, call: &ast::CallAST) -> Result<values::CallSiteValue<'ctx>, ()> {
+  pub fn call_write(&self, call: &ast::CallAST) -> Result<values::CallSiteValue<'ctx>, String> {
     let function = self.module.get_function(&call.callee);
     match function {
       Some(func) => {
         let argument = self.argument_get(&call.argument);
-        let returns = self.builder.build_call(
-          func,
-          &argument,
-          "return",
-        );
-        return Ok(returns);
+        match argument {
+          Ok(arg) => {
+            let returns = self.builder.build_call(func, &arg, "return");
+            return Ok(returns);
+          }
+
+          Err(s) => {
+            return Err(s);
+          }
+        }
       }
       None => {
-        return Err(());
+        return Err(format!("{} not found function", &call.callee));
       }
     }
   }
 
-  fn argument_get(&self, arguments: &Vec<ast::Types>) ->  Vec<values::BasicValueEnum<'ctx>>{
+  fn argument_get(
+    &self,
+    arguments: &Vec<ast::Types>,
+  ) -> Result<Vec<values::BasicValueEnum<'ctx>>, String> {
     let i32_type = self.context.i32_type();
     let mut argument_vec: Vec<values::BasicValueEnum> = Vec::new();
     for argument in arguments.iter() {
       match argument {
-        ast::Types::Variable(var) => {
-          match self.vars_serch(&var.name) {
-            Ok(var) => {
-              argument_vec.push(*var);
-            },
-            Err(()) => {
-              //error
-            }
+        ast::Types::Variable(var) => match self.vars_serch(&var.name) {
+          Ok(var) => {
+            argument_vec.push(*var);
           }
-        }
+          Err(s) => {
+            return Err(s);
+          }
+        },
 
         ast::Types::Number(num) => {
           argument_vec.push(i32_type.const_int(num.num as u64, false).into());
@@ -44,12 +49,20 @@ impl<'ctx> CodeGen<'ctx> {
 
         ast::Types::Binary(bin) => {
           let result = self.calcuration(bin);
-          argument_vec.push(result.into());
+          match result {
+            Ok(result) => {
+              argument_vec.push(result.into());
+            }
+
+            Err(s) => {
+              return Err(s);
+            }
+          }
         }
         _ => {}
       }
     }
 
-    return argument_vec;
+    return Ok(argument_vec);
   }
 }
