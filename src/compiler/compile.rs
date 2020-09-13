@@ -18,7 +18,7 @@ pub struct CodeGen<'ctx> {
   pub for_gen_stack: usize,
 }
 
-pub fn jit_compile(ast: ast::RootAST) {
+pub fn compile(ast: ast::RootAST) {
   let context = Context::create();
   let module = context.create_module("main");
   let builder = context.create_builder();
