@@ -1,6 +1,8 @@
 use super::super::parser::ast;
 use super::compile::CodeGen;
 use inkwell::values;
+use inkwell::types;
+use inkwell::AddressSpace;
 
 #[derive(Debug)]
 pub struct Var<'ctx> {
@@ -78,6 +80,47 @@ impl<'ctx> CodeGen<'ctx> {
     }
 
     return Err(());
+  }
+
+  pub fn vars_type(&self) -> (Vec<types::BasicTypeEnum<'ctx>>, Vec<String>) {
+    let i32_type = self.context.i32_type();
+    let i8_type = self.context.i8_type();
+    let mut types: Vec<types::BasicTypeEnum<'ctx>> = Vec::new();
+    let mut name_vec: Vec<String> = Vec::new();
+    for reverse in self.var_vec.iter().rev() {
+      for vars in reverse.iter().rev() {
+        match vars.value {
+          values::BasicValueEnum::IntValue(_) => {types.push(i32_type.into())}
+          values::BasicValueEnum::PointerValue(_) => {types.push(i8_type.ptr_type(AddressSpace::Generic).into())}
+          _ => {}
+        }
+        name_vec.push(vars.name.to_string());
+      }
+    }
+
+    return(types, name_vec);
+  }
+
+  pub fn push_var_param(&mut self, function_param: Vec<values::BasicValueEnum<'ctx>>, name_vec:&Vec<String>) {
+    for (index, param) in function_param.iter().enumerate() {
+      let name = &name_vec[index];
+      let value = values::BasicValueEnum::IntValue(param.into_int_value());
+      self.push_var(value, name);
+    }
+  }
+
+  pub fn get_argment(&self, name_vec:&Vec<String>) ->Result<Vec<values::BasicValueEnum<'ctx>>, ()> {
+    let mut arguments:Vec<values::BasicValueEnum<'ctx>> = Vec::new();
+    for name in name_vec.iter() {
+      match self.vars_serch(name) {
+        Ok(value) => {
+          arguments.push(value.clone());
+        }
+        Err(()) => {return Err(())}
+      }
+    }
+
+    return Ok(arguments);
   }
 
   pub fn change_value(

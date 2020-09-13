@@ -76,19 +76,11 @@ impl<'ctx> CodeGen<'ctx> {
       }
 
       ast::Types::Ifs(ifs) => {
-        self.push_var_vec();
-        self.push_fun_vec();
         self.if_write(&ifs, basic_block);
-        self.push_var_vec_remove();
-        self.push_fun_vec_remove();
       }
 
       ast::Types::Fors(fors) => {
-        self.push_var_vec();
-        self.push_fun_vec();
         self.for_write(&fors, basic_block);
-        self.push_var_vec_remove();
-        self.push_fun_vec_remove();
       }
 
       ast::Types::Variable(var) => {

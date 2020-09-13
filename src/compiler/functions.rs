@@ -1,7 +1,6 @@
 use super::super::parser::ast;
 use super::compile::CodeGen;
 use inkwell::types;
-use inkwell::values;
 use inkwell::AddressSpace;
 
 pub struct Function {
@@ -33,11 +32,7 @@ impl<'ctx> CodeGen<'ctx> {
     let basic_block = self.context.append_basic_block(function, "entry");
     self.builder.position_at_end(basic_block);
     let function_param = function.get_params();
-    for (index, param) in function_param.iter().enumerate() {
-      let name = &name_vec[index];
-      let value = values::BasicValueEnum::IntValue(param.into_int_value());
-      self.push_var(value, name);
-    }
+    self.push_var_param(function_param, &name_vec);
     self.scope_write(&funs.node, basic_block);
     let i32_type = self.context.i32_type();
     self

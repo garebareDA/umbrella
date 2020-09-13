@@ -5,21 +5,18 @@ source_filename = "main"
 @format = private unnamed_addr constant [4 x i8] c"%d\0A\00"
 @format.1 = private unnamed_addr constant [4 x i8] c"%d\0A\00"
 @strings.2 = private unnamed_addr constant [6 x i8] c"else\0A\00"
+@format.3 = private unnamed_addr constant [4 x i8] c"%d\0A\00"
 @format.4 = private unnamed_addr constant [4 x i8] c"%d\0A\00"
-@strings.5 = private unnamed_addr constant [6 x i8] c"else\0A\00"
-@format.6 = private unnamed_addr constant [4 x i8] c"%d\0A\00"
-@format.7 = private unnamed_addr constant [4 x i8] c"%d\0A\00"
 
 declare i32 @printf(i8*, ...)
 
 define i32 @main() {
 entry:
   %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format, i32 0, i32 0), i32 -1)
-  %ifs = call i32 @ifs()
-  %ifs1 = call i32 @ifs.3()
-  %fors = call i32 @fors()
+  %ifs = call i32 @ifs(i32 -1)
+  %fors = call i32 @fors(i32 -1)
   %return = call i32 @function(i32 1)
-  %printf2 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format.7, i32 0, i32 0), i32 %return)
+  %printf1 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format.4, i32 0, i32 0), i32 %return)
   ret i32 0
 }
 
@@ -30,12 +27,13 @@ entry:
   ret i32 0
 }
 
-define i32 @ifs() {
+define i32 @ifs(i32) {
 entry:
-  br i1 false, label %then, label %else
+  %greaterthan = icmp sgt i32 %0, 1
+  br i1 %greaterthan, label %then, label %else
 
 then:                                             ; preds = %entry
-  %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format.1, i32 0, i32 0), i32 -1)
+  %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format.1, i32 0, i32 0), i32 %0)
   br label %end
 
 else:                                             ; preds = %entry
@@ -46,23 +44,7 @@ end:                                              ; preds = %else, %then
   ret i32 0
 }
 
-define i32 @ifs.3() {
-entry:
-  br i1 false, label %then, label %else
-
-then:                                             ; preds = %entry
-  %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format.4, i32 0, i32 0), i32 -1)
-  br label %end
-
-else:                                             ; preds = %entry
-  %printf1 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @strings.5, i32 0, i32 0))
-  br label %end
-
-end:                                              ; preds = %else, %then
-  ret i32 0
-}
-
-define i32 @fors() {
+define i32 @fors(i32) {
 entry:
   br label %preloop
 
@@ -72,7 +54,7 @@ preloop:                                          ; preds = %loop, %entry
   br i1 %lessthan, label %loop, label %afterloop
 
 loop:                                             ; preds = %preloop
-  %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format.6, i32 0, i32 0), i32 %i)
+  %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format.3, i32 0, i32 0), i32 %i)
   %sum = add i32 %i, 1
   br label %preloop
 
