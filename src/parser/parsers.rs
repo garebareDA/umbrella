@@ -83,6 +83,7 @@ impl Persers {
     let len = self.tokens.len();
 
     if token == TOKEN._variable {
+      //関数の解析
       if len > 1 && self.get_tokens(self.index + 1).get_token() == TOKEN._paren_left {
         let value = self.get_tokens(self.index).get_value();
         let mut callee = ast::CallAST::new(value);
@@ -165,7 +166,6 @@ impl Persers {
               }
               return Ok(ast::Types::Variable(vars));
             }
-
             _ => {}
           },
           Err(s) => {
@@ -177,7 +177,7 @@ impl Persers {
           let value = self.get_tokens(self.index + 2).get_value();
           return Err(format!("{} is parse error", value));
         } else if !ok_type {
-          let value = self.get_tokens(self.index + 3).get_value();
+          let value = self.get_tokens(self.index + 4).get_value();
           return Err(format!("{} is parse error", value));
         }
       }
@@ -345,7 +345,7 @@ impl Persers {
         if self.get_tokens(self.index).get_token() == TOKEN._paren_left {
           loop {
             self.index_add(1);
-            let token =  self.get_tokens(self.index).get_token();
+            let token = self.get_tokens(self.index).get_token();
             if token == TOKEN._paren_right {
               self.index_add(1);
               break;
@@ -388,6 +388,19 @@ impl Persers {
           return Ok(ast::Types::Function(function_ast));
         }
       }
+    }
+
+    if token == TOKEN._square_brackets_left {
+      let vec = ast::VectorAST::new();
+      loop {
+        let token = self.get_tokens(self.index).get_token();
+        if token == TOKEN._square_brackets_right {
+          self.index_add(1);
+          break;
+        }
+        self.index_add(1);
+      }
+      return Ok(ast::Types::Vector(vec));
     }
 
     if token == TOKEN._return {

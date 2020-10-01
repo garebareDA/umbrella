@@ -9,6 +9,7 @@ pub enum Types {
   Fors(ForsAST),
   Return(ReturnAST),
   Function(FunctionAST),
+  Vector(VectorAST),
 }
 
 #[derive(Debug, Clone)]
@@ -169,6 +170,19 @@ impl FunctionAST {
       returns:None,
       param:Vec::new(),
       node:Vec::new(),
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct VectorAST {
+  pub vec : Vec<Types>,
+}
+
+impl VectorAST {
+  pub fn new() -> Self {
+    Self {
+      vec:Vec::new(),
     }
   }
 }
