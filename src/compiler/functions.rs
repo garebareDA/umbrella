@@ -120,6 +120,18 @@ impl<'ctx> CodeGen<'ctx> {
     }
   }
 
+  pub fn fucntions_serch(&self, name: &str) ->Result<&Function, String>  {
+    for reverse in self.function_vec.iter().rev() {
+      for function in reverse.iter().rev() {
+        if function.get_name() == name {
+          return Ok(function);
+        }
+      }
+    }
+
+    return Err(format!("{} Function not found", name));
+  }
+
   pub fn push_fun_vec(&mut self) {
     self.function_vec.push(Vec::new());
   }

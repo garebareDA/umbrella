@@ -6,6 +6,15 @@ use inkwell::values;
 impl<'ctx> CodeGen<'ctx> {
   pub fn call_write(&self, call: &ast::CallAST) -> Result<values::CallSiteValue<'ctx>, String> {
     let function = self.module.get_function(&call.callee);
+    let serch = self.fucntions_serch(&call.callee);
+
+    match serch {
+      Ok(_) => {},
+      Err(s) => {
+        return Err(s);
+      }
+    }
+
     match function {
       Some(func) => {
         let argument = self.argument_get(&call.argument);
