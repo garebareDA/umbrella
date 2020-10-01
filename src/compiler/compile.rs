@@ -178,7 +178,7 @@ impl<'ctx> CodeGen<'ctx> {
       self.builder.position_at_end(basic_block);
       match ast {
         ast::Types::Function(fun) => {
-          self.push_fun(fun, &fun.name);
+          self.push_fun(fun, &fun.name, &fun.param);
           self.push_var_vec();
           self.push_fun_vec();
           let fun = self.function_write(&fun);

@@ -127,12 +127,26 @@ impl<'ctx> CodeGen<'ctx> {
     &mut self,
     function_param: Vec<values::BasicValueEnum<'ctx>>,
     name_vec: &Vec<String>,
-  ) {
+  ) -> Result<(), String>{
     for (index, param) in function_param.iter().enumerate() {
       let name = &name_vec[index];
-      let value = values::BasicValueEnum::IntValue(param.into_int_value());
-      self.push_var(value, name);
+      match param {
+        values::BasicValueEnum::IntValue(_) => {
+          let value = values::BasicValueEnum::IntValue(param.into_int_value());
+          self.push_var(value, name);
+        }
+
+        values::BasicValueEnum::PointerValue(_) => {
+          let value = values::BasicValueEnum::PointerValue(param.into_pointer_value());
+          self.push_var(value, name);
+        }
+
+        _ => {
+          return Err("Parament is incorrect".to_string());
+        }
+      }
     }
+    return Ok(());
   }
 
   pub fn get_argment(

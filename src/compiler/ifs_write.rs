@@ -16,7 +16,12 @@ impl<'ctx> CodeGen<'ctx> {
     let main_type = i32_type.fn_type(&types, false);
     let function = self.module.add_function("ifs", main_type, None);
     let function_param = function.get_params();
-    self.push_var_param(function_param, &name_vec);
+    match self.push_var_param(function_param, &name_vec) {
+      Ok(()) => {},
+      Err(s) => {
+        return Err(s);
+      }
+    }
     let basic_block_entry = self.context.append_basic_block(function, "entry");
 
     match &ifs.ifs[0] {
