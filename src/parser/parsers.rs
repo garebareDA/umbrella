@@ -390,13 +390,28 @@ impl Persers {
       }
     }
 
+    //vectorの解析
     if token == TOKEN._square_brackets_left {
-      let vec = ast::VectorAST::new();
+      let mut vec = ast::VectorAST::new();
+      self.index_add(1);
       loop {
         let token = self.get_tokens(self.index).get_token();
         if token == TOKEN._square_brackets_right {
           self.index_add(1);
           break;
+        }
+
+        if token == TOKEN._comma {
+          self.index_add(1);
+        }
+
+        match self.judge() {
+          Ok(t) => {
+            vec.vec.push(t);
+          }
+          Err(s) => {
+            return Err(s);
+          }
         }
         self.index_add(1);
       }
