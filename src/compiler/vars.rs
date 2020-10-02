@@ -73,7 +73,6 @@ impl<'ctx> CodeGen<'ctx> {
           }
         }
       }
-
       ast::Types::Vector(vec) => match types {
         Some(t) => {
           let vec = self.vector_write(&vec, &t);
@@ -90,6 +89,32 @@ impl<'ctx> CodeGen<'ctx> {
           return Err(format!("{} is vector type error", name));
         }
       },
+      ast::Types::Variable(var) => {
+        let serch = self.vars_serch(&var.name);
+        let i32_type = self.context.i32_type();
+
+        match serch {
+          Ok(vars) => {
+            match var.index {
+              Some(num) => match vars {
+                values::BasicValueEnum::VectorValue(vec) => {
+                  let el = vec.const_extract_element(i32_type.const_int(num as u64, false));
+                  self.push_var(el, name);
+                  return Ok(());
+                }
+                _ => {
+                  return Err(format!("Not a Vector"));
+                }
+              },
+              None => {}
+            }
+            self.push_var(*vars, name);
+          }
+          Err(s) => {
+            return Err(s);
+          }
+        }
+      }
 
       _ => {
         return Err(format!("{} is type error", name));
@@ -137,6 +162,9 @@ impl<'ctx> CodeGen<'ctx> {
           values::BasicValueEnum::PointerValue(_) => {
             types.push(i8_type.ptr_type(AddressSpace::Generic).into())
           }
+          values::BasicValueEnum::VectorValue(vec) => {
+            types.push(i32_type.vec_type(vec.get_type().get_size()).into());
+          }
           _ => {}
         }
         name_vec.push(vars.name.to_string());
@@ -161,6 +189,11 @@ impl<'ctx> CodeGen<'ctx> {
 
         values::BasicValueEnum::PointerValue(_) => {
           let value = values::BasicValueEnum::PointerValue(param.into_pointer_value());
+          self.push_var(value, name);
+        }
+
+        values::BasicValueEnum::VectorValue(_) => {
+          let value = values::BasicValueEnum::VectorValue(param.into_vector_value());
           self.push_var(value, name);
         }
 
