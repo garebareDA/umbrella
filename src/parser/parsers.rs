@@ -25,6 +25,9 @@ impl Persers {
       let token = self.get_tokens(self.index).get_token();
       if token == TOKEN._end {
         self.index_add(1);
+        if len <= self.index {
+          break;
+        }
         continue;
       }
 
@@ -114,6 +117,30 @@ impl Persers {
         }
 
         return Ok(ast::Types::Call(callee));
+      }
+
+      if len > 1 && self.get_tokens(self.index + 1).get_token() == TOKEN._square_brackets_left {
+        let value = self.get_tokens(self.index).get_value();
+        let mut variable_ast = ast::VariableAST::new(value);
+        self.index_add(2);
+        let judge = self.judge();
+        match judge {
+          Ok(t) => match t {
+            ast::Types::Number(num) => {
+              variable_ast.index = Some(num.num);
+              self.index_add(1);
+              if self.get_tokens(self.index).get_token() == TOKEN._square_brackets_right {
+                return Ok(ast::Types::Variable(variable_ast));
+              }else {
+                return Err(format!("']' there is not"));
+              }
+            }
+            _ => return Err(format!("Index is not int")),
+          },
+          Err(s) => {
+            return Err(s);
+          }
+        }
       }
 
       let value = self.get_tokens(self.index).get_value();

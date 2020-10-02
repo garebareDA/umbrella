@@ -93,6 +93,7 @@ impl BinaryAST {
 pub struct VariableAST{
   pub name:String,
   pub types:Option<VariableType>,
+  pub index:Option<i64>,
   pub node: Vec<Types>
 }
 
@@ -101,6 +102,7 @@ impl VariableAST{
     VariableAST{
       name:name.to_string(),
       types:None,
+      index:None,
       node:Vec::new()
     }
   }
