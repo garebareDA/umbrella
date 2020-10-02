@@ -7,3 +7,4 @@ pub mod vars;
 pub mod functions;
 pub mod call;
 pub mod returns;
+pub mod vector;

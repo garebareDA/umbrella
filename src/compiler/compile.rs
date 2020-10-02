@@ -126,7 +126,7 @@ impl<'ctx> CodeGen<'ctx> {
 
       ast::Types::Variable(var) => {
         if !var.node.is_empty() {
-          let var = self.var_write(&var.name, &var.node[0]);
+          let var = self.var_write(&var.name, &var.node[0], &var.types);
           match var {
             Ok(_) => {}
             Err(s) => {

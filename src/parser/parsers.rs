@@ -25,6 +25,9 @@ impl Persers {
       let token = self.get_tokens(self.index).get_token();
       if token == TOKEN._end {
         self.index_add(1);
+        if len <= self.index {
+          break;
+        }
         continue;
       }
 
@@ -83,6 +86,7 @@ impl Persers {
     let len = self.tokens.len();
 
     if token == TOKEN._variable {
+      //関数の解析
       if len > 1 && self.get_tokens(self.index + 1).get_token() == TOKEN._paren_left {
         let value = self.get_tokens(self.index).get_value();
         let mut callee = ast::CallAST::new(value);
@@ -113,6 +117,30 @@ impl Persers {
         }
 
         return Ok(ast::Types::Call(callee));
+      }
+
+      if len > 1 && self.get_tokens(self.index + 1).get_token() == TOKEN._square_brackets_left {
+        let value = self.get_tokens(self.index).get_value();
+        let mut variable_ast = ast::VariableAST::new(value);
+        self.index_add(2);
+        let judge = self.judge();
+        match judge {
+          Ok(t) => match t {
+            ast::Types::Number(num) => {
+              variable_ast.index = Some(num.num);
+              self.index_add(1);
+              if self.get_tokens(self.index).get_token() == TOKEN._square_brackets_right {
+                return Ok(ast::Types::Variable(variable_ast));
+              }else {
+                return Err(format!("']' there is not"));
+              }
+            }
+            _ => return Err(format!("Index is not int")),
+          },
+          Err(s) => {
+            return Err(s);
+          }
+        }
       }
 
       let value = self.get_tokens(self.index).get_value();
@@ -146,7 +174,7 @@ impl Persers {
 
     if token == TOKEN._let {
       let none_type = self.get_tokens(self.index + 2).get_token() == TOKEN._equal;
-      let ok_type = self.get_tokens(self.index + 3).get_token() == TOKEN._equal;
+      let ok_type = self.get_tokens(self.index + 4).get_token() == TOKEN._equal;
       if none_type || ok_type {
         self.index_add(1);
         let vars = self.judge();
@@ -165,7 +193,6 @@ impl Persers {
               }
               return Ok(ast::Types::Variable(vars));
             }
-
             _ => {}
           },
           Err(s) => {
@@ -177,7 +204,7 @@ impl Persers {
           let value = self.get_tokens(self.index + 2).get_value();
           return Err(format!("{} is parse error", value));
         } else if !ok_type {
-          let value = self.get_tokens(self.index + 3).get_value();
+          let value = self.get_tokens(self.index + 4).get_value();
           return Err(format!("{} is parse error", value));
         }
       }
@@ -345,7 +372,7 @@ impl Persers {
         if self.get_tokens(self.index).get_token() == TOKEN._paren_left {
           loop {
             self.index_add(1);
-            let token =  self.get_tokens(self.index).get_token();
+            let token = self.get_tokens(self.index).get_token();
             if token == TOKEN._paren_right {
               self.index_add(1);
               break;
@@ -388,6 +415,34 @@ impl Persers {
           return Ok(ast::Types::Function(function_ast));
         }
       }
+    }
+
+    //vectorの解析
+    if token == TOKEN._square_brackets_left {
+      let mut vec = ast::VectorAST::new();
+      self.index_add(1);
+      loop {
+        let token = self.get_tokens(self.index).get_token();
+        if token == TOKEN._square_brackets_right {
+          self.index_add(1);
+          break;
+        }
+
+        if token == TOKEN._comma {
+          self.index_add(1);
+        }
+
+        match self.judge() {
+          Ok(t) => {
+            vec.vec.push(t);
+          }
+          Err(s) => {
+            return Err(s);
+          }
+        }
+        self.index_add(1);
+      }
+      return Ok(ast::Types::Vector(vec));
     }
 
     if token == TOKEN._return {

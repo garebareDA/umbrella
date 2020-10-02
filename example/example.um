@@ -1,4 +1,7 @@
-let variable = 1 + 1 - 2 * 3 / 2;
+let variable:int = 1 + 1 - 2 * 3 / 2;
+let vector:int = [1 2 3 4 5];
+let vector1 = vector[1];
+print(vector1)
 print(variable);
 
 if variable > 1 {
