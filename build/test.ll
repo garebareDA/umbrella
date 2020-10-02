@@ -13,8 +13,8 @@ declare i32 @printf(i8*, ...)
 define i32 @main() {
 entry:
   %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format, i32 0, i32 0), i32 -1)
-  %ifs = call i32 @ifs(i32 -1)
-  %fors = call i32 @fors(i32 -1)
+  %ifs = call i32 @ifs(<5 x i32> <i32 1, i32 2, i32 3, i32 4, i32 5>, i32 -1)
+  %fors = call i32 @fors(<5 x i32> <i32 1, i32 2, i32 3, i32 4, i32 5>, i32 -1)
   %return = call i32 @function(i32 1)
   %printf1 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format.4, i32 0, i32 0), i32 %return)
   ret i32 0
@@ -29,11 +29,10 @@ entry:
 
 define i32 @ifs(i32) {
 entry:
-  %greaterthan = icmp sgt i32 %0, 1
-  br i1 %greaterthan, label %then, label %else
+  br i1 false, label %then, label %else
 
 then:                                             ; preds = %entry
-  %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format.1, i32 0, i32 0), i32 %0)
+  %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @format.1, i32 0, i32 0), i32 -1)
   br label %end
 
 else:                                             ; preds = %entry

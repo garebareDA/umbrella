@@ -28,7 +28,12 @@ impl<'ctx> Var<'ctx> {
 }
 
 impl<'ctx> CodeGen<'ctx> {
-  pub fn var_write(&mut self, name: &str, value: &ast::Types) -> Result<(), String> {
+  pub fn var_write(
+    &mut self,
+    name: &str,
+    value: &ast::Types,
+    types: &Option<ast::VariableType>,
+  ) -> Result<(), String> {
     match value {
       ast::Types::Number(num) => {
         let i32_type = self.context.i32_type();
@@ -68,6 +73,24 @@ impl<'ctx> CodeGen<'ctx> {
           }
         }
       }
+
+      ast::Types::Vector(vec) => match types {
+        Some(t) => {
+          let vec = self.vector_write(&vec, &t);
+          match vec {
+            Ok(vec) => {
+              self.push_var(vec, name);
+            }
+            Err(s) => {
+              return Err(s);
+            }
+          }
+        }
+        None => {
+          return Err(format!("{} is vector type error", name));
+        }
+      },
+
       _ => {
         return Err(format!("{} is type error", name));
       }
@@ -127,7 +150,7 @@ impl<'ctx> CodeGen<'ctx> {
     &mut self,
     function_param: Vec<values::BasicValueEnum<'ctx>>,
     name_vec: &Vec<String>,
-  ) -> Result<(), String>{
+  ) -> Result<(), String> {
     for (index, param) in function_param.iter().enumerate() {
       let name = &name_vec[index];
       match param {
