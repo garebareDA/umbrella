@@ -18,7 +18,7 @@ pub struct CodeGen<'ctx> {
   pub for_gen_stack: usize,
 }
 
-pub fn compile(ast: ast::RootAST) {
+pub fn compile(ast: ast::RootAST, path:&str) {
   let context = Context::create();
   let module = context.create_module("main");
   let builder = context.create_builder();
@@ -35,7 +35,7 @@ pub fn compile(ast: ast::RootAST) {
   code_gen.add_fun_printf();
   match code_gen.set_main_run(&ast.node) {
     Ok(_) => {
-      code_gen.set_return();
+      code_gen.set_return(path);
     }
 
     Err(s) => {
@@ -228,12 +228,12 @@ impl<'ctx> CodeGen<'ctx> {
     self.module.add_function("printf", printf_type, None);
   }
 
-  fn set_return(&mut self) {
+  fn set_return(&mut self, path:&str) {
     let i32_type = self.context.i32_type();
     self
       .builder
       .build_return(Some(&i32_type.const_int(0, false)));
     self.module.print_to_stderr();
-    self.module.print_to_file("./build/test.ll").expect("faild");
+    self.module.print_to_file(path).expect("faild");
   }
 }
